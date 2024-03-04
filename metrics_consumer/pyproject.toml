@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "metrics-consumer"
+version = "0.1.0"
+description = ""
+authors = ["kapsali29 <kapsali29@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+confluent-kafka = "^2.3.0"
+psycopg2-binary = "^2.9.9"
+neo4j = "^5.18.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "metrics-catalogue"
+version = "0.1.0"
+description = ""
+authors = ["kapsali29 <kapsali29@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.110.0"
+neo4j = "^5.18.0"
+psycopg2-binary = "^2.9.9"
+uvicorn = "^0.27.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
