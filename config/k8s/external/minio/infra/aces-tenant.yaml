@@ -1,0 +1,87 @@
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  creationTimestamp: null
+  name: aces
+  namespace: minio-operator
+scheduler:
+  name: ""
+spec:
+  certConfig:
+    commonName: '*.aces-hl.minio-operator.svc.cluster.local'
+    dnsNames:
+    - aces-aces-0.aces-hl.minio-operator.svc.cluster.local
+    organizationName:
+    - system:nodes
+  configuration:
+    name: aces-env-configuration
+  exposeServices:
+    minio: true
+  features:
+    enableSFTP: false
+  image: minio/minio:RELEASE.2023-09-07T02-05-02Z
+  imagePullPolicy: IfNotPresent
+  imagePullSecret: {}
+  mountPath: /export
+  podManagementPolicy: Parallel
+  pools:
+  - affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: v1.min.io/tenant
+              operator: In
+              values:
+              - aces
+          topologyKey: kubernetes.io/hostname
+    name: aces
+    resources: {}
+    servers: 1
+    volumeClaimTemplate:
+      apiVersion: v1
+      kind: persistentvolumeclaims
+      metadata:
+        creationTimestamp: null
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: hostpath
+      status: {}
+    volumesPerServer: 1
+  requestAutoCert: false
+  serviceAccountName: aces-sa
+  users:
+  - name: aces-user-1
+status:
+  availableReplicas: 0
+  certificates: {}
+  currentState: ""
+  pools: null
+  revision: 0
+  syncVersion: ""
+  usage: {}
+
+---
+apiVersion: v1
+data:
+  config.env: ZXhwb3J0IE1JTklPX1JPT1RfVVNFUj0iV0VNUFVKRktSTVhRMDFMSFhMVDUiCmV4cG9ydCBNSU5JT19ST09UX1BBU1NXT1JEPSIwVVJ4QnZFSlIxNjViUFBCbFZHemhVdExIR0NyejVLcEpldjN0Mmo3Igo=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: aces-env-configuration
+  namespace: minio-operator
+
+---
+apiVersion: v1
+data:
+  CONSOLE_ACCESS_KEY: YWRtaW4=
+  CONSOLE_SECRET_KEY: bWFydGVsMjAyNA==
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: aces-user-1
+  namespace: minio-operator

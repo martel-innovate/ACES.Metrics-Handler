@@ -1,0 +1,49 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# NOTE (1), (2)
+resources:
+- operator.yaml
+- aces-tenant.yaml
+
+patches:
+- path: operator-replicas.yaml
+  target:
+    kind: Deployment
+    name: minio-operator
+- path: fix-tenant-pool-creation-timestamp.yaml
+  target:
+    kind: Tenant
+    name: aces
+# ^ NOTE (3)
+
+# NOTE
+# ----
+# 1. How to generate `operator.yaml`.
+#
+#     $ cd nix
+#     $ nix shell
+#     $ cd ../deployment/mesh-infra/storage/minio
+#     $ kubectl minio init -o > operator.yaml
+#
+# 2. How to generate `cylcomed-tenant.yaml`. You can only do this if your
+# Kube config points to the Cylcomed cluster and the MinIO Operator is already
+# running in the cluster. Then
+#
+#     $ cd nix
+#     $ nix shell
+#     $ cd ../deployment/mesh-infra/storage/minio
+#     $ kubectl minio tenant create horse \
+#         --namespace minio-operator \
+#         --pool horse \
+#         --servers 1 \
+#         --storage-class local-storage \
+#         --volumes 1 \
+#         --capacity 1Gi \
+#         --expose-minio-service \
+#         --disable-tls \
+#         --output >horse-tenant.yaml
+#
+# 3. MinIO Tenant CRD bug. Operator doesn't like what comes out of the above
+# command and will fail validation. Reason: the creation timestamp shouldn't
+# be there. So we remove it with a Kustomize patch.

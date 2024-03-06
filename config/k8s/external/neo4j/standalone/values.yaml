@@ -1,0 +1,14 @@
+neo4j:
+  name: neo4j
+  resources:
+    cpu: "0.5"
+    memory: "2Gi"
+
+  password: "neo4j290292"
+
+volumes:
+  data:
+    mode: defaultStorageClass
+    defaultStorageClass:
+      requests:
+        storage: 2Gi

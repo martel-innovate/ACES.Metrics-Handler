@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: metrics-consumer
+  name: metrics-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metrics-consumer
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: metrics-consumer
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_HOST
+              value: broker
+            - name: KAFKA_PORT
+              value: "29092"
+            - name: GROUP_ID
+              value: pause
+            - name: TSCALE_HOST
+              value: timescaledb
+            - name: TSCALE_NAME
+              value: aces
+            - name: TSCALE_DB
+              value: aces
+            - name: TSCALE_PASS
+              value: aces
+            - name: NEO4J_HOST
+              value: neo4j
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASS
+              value: neo4j290292
+          image: pkapsalismartel/metrics_consumer:v0.3
+          name: metrics-consumer
+          resources: {}
+      hostname: metrics-consumer
+      restartPolicy: Always

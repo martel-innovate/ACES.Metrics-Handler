@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus-kafka-adapter
+  name: prometheus-kafka-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-kafka-adapter
+  template:
+    metadata:
+      labels:
+        app: prometheus-kafka-adapter
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_BATCH_NUM_MESSAGES
+              value: "10000"
+            - name: KAFKA_BROKER_LIST
+              value: broker:29092
+            - name: PORT
+              value: "8080"
+            - name: SERIALIZATION_FORMAT
+              value: json
+          image: telefonica/prometheus-kafka-adapter:1.9.0
+          name: prometheus-kafka-adapter
+          ports:
+            - containerPort: 8080
+              hostPort: 8080
+              protocol: TCP
+          resources: {}
+      hostname: prometheus-kafka-adapter
+      restartPolicy: Always
+status: {}
