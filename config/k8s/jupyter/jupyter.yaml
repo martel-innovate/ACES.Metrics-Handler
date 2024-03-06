@@ -44,12 +44,12 @@ spec:
             - name: JUPYTER_ENABLE_LAB
               value: "yes"
             - name: JUPYTER_TOKEN
-              value: "horse"
+              value: "aces"
             - name: NB_GID
               value: "1000"
             - name: NB_USER
-              value: "horse"
-          image: pkapsalismartel/jupyter-test:v0.2
+              value: "aces"
+          image: pkapsalismartel/notebook:v0.10
           name: notebook
           ports:
             - containerPort: 8888
@@ -57,9 +57,9 @@ spec:
               protocol: TCP
           resources: {}
           volumeMounts:
-            - mountPath: /home/horse
+            - mountPath: /home/aces
               name: notebook-claim0
-          workingDir: /home/horse
+          workingDir: /home/aces
       hostname: notebook
       restartPolicy: Always
       volumes:

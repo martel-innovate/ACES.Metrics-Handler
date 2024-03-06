@@ -1,0 +1,1 @@
+helm install prefect-agent prefect/prefect-agent -f values.yaml

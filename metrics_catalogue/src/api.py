@@ -18,22 +18,27 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 log = logging.getLogger(__name__)
 
 app = FastAPI()
-supply_agent = SupplyGraph(
-    neo4j_host=NEO4J_HOST,
-    neo4j_user=NEO4J_USER,
-    neo4j_pass=NEO4J_PASS
-)
-demand_agent = DemandGraph(
-    neo4j_host=NEO4J_HOST,
-    neo4j_user=NEO4J_USER,
-    neo4j_pass=NEO4J_PASS
-)
+
 aces_metrics = AcesMetrics(
     host=TSCALE_HOST,
     username=TSCALE_USER,
     database=TSCALE_DB,
     password=TSCALE_PASS
 )
+
+def init_graph_base():
+    supply_agent = SupplyGraph(
+        neo4j_host=NEO4J_HOST,
+        neo4j_user=NEO4J_USER,
+        neo4j_pass=NEO4J_PASS
+    )
+    demand_agent = DemandGraph(
+        neo4j_host=NEO4J_HOST,
+        neo4j_user=NEO4J_USER,
+        neo4j_pass=NEO4J_PASS
+    )
+    return supply_agent, demand_agent
+
 
 origins = ["*"]
 app.add_middleware(
@@ -80,6 +85,7 @@ class NodeBody(BaseModel):
 
 @app.post('/set/emdcs')
 async def insert_emdc(item_body: EMDCBody):
+    supply_agent, demand_agent = init_graph_base()
     this_body = item_body.__dict__
     log.info(f"insert EMDC with ID: {this_body['emdc_id']} and Location: {this_body['location']}")
     query = supply_agent.insert_emdc(
@@ -87,12 +93,14 @@ async def insert_emdc(item_body: EMDCBody):
         location=this_body["location"]
     )
     supply_agent.exec(query)
+    supply_agent.session.close()
     return {"msg": "EMDC inserted"}, 201
 
 
 @app.post('/set/emdcs/{emdc_id}/clusters')
 async def insert_cluster(cluster_body: ClusterBody, emdc_id: str):
     this_cluster_body = cluster_body.__dict__
+    supply_agent, demand_agent = init_graph_base()
     log.info(
         f"insert Cluster with ID: {this_cluster_body['cluster_id']} and"
         f" Location: {this_cluster_body['node_count']} to EMDC {emdc_id}"
@@ -103,12 +111,14 @@ async def insert_cluster(cluster_body: ClusterBody, emdc_id: str):
         node_count=this_cluster_body["node_count"]
     )
     supply_agent.bolt_transaction(query)
+    supply_agent.session.close()
     return {"msg": "Cluster inserted"}, 201
 
 
 @app.post('/set/cluster/{cluster_id}/nodes')
 async def insert_node(node_body: NodeBody, cluster_id: str):
     node_input = node_body
+    supply_agent, demand_agent = init_graph_base()
     log.info(f"Insert Node with ID: {node_input.node_id} to cluster with ID: {cluster_id}")
     query = supply_agent.insert_node(
         cluster_id=cluster_id,
@@ -119,22 +129,26 @@ async def insert_node(node_body: NodeBody, cluster_id: str):
         cores=node_input.cpu.cores
     )
     supply_agent.exec(query)
+    supply_agent.session.close()
     return {"msg": "Node inserted"}, 201
 
 
 @app.get('/cluster/{cluster_id}')
 async def get_cluster(cluster_id: str):
+    supply_agent, demand_agent = init_graph_base()
     query = supply_agent.get_cluster_info(cluster_id=cluster_id)
     results = supply_agent.emit_transaction(query)
     this_result = results[0]
     cluster_info = this_result['cl']._properties
     nodes = [n._properties for n in this_result['nodes']]
     cluster_info['nodes'] = nodes
+    supply_agent.session.close()
     return cluster_info, 200
 
 
 @app.get('/nodes/{node_id}')
 async def get_node(node_id: str):
+    supply_agent, demand_agent = init_graph_base()
     query = supply_agent.get_node_info(node_id)
     results = supply_agent.emit_transaction(query)
     this_result = results[0]
@@ -145,11 +159,13 @@ async def get_node(node_id: str):
             'values': obj._properties
         } for obj in this_result['objs']
     ]
+    supply_agent.session.close()
     return node_info
 
 
 @app.get('/nodes/{node_id}/pods')
 async def get_node_pods(node_id: str):
+    supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_node_pods(node_id)
     results = demand_agent.emit_transaction(query)
     list_of_pods = results[0]["list_of_pods"]
@@ -157,22 +173,27 @@ async def get_node_pods(node_id: str):
         lambda d: d['pod_id'],
         [pod._properties for pod in list_of_pods]
     ))
+    demand_agent.session.close()
     return list_of_res
 
 
 @app.get('/metrics')
 async def get_metrics():
+    supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_list_of_metrics()
     results = demand_agent.emit_transaction(query)
     list_of_metrics = [metric["m"]._properties["name"] for metric in results]
+    demand_agent.session.close()
     return list_of_metrics
 
 
 @app.get('/nodes/{node_id}/pod/{pod_id}/metrics')
 async def get_pod_metrics(node_id: str, pod_id: str):
+    supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_pod_metrics(node_id, pod_id)
     results = demand_agent.emit_transaction(query)[0]['pod_metrics']
     pod_metrics = [metric._properties["name"] for metric in results]
+    demand_agent.session.close()
     return pod_metrics
 
 
@@ -180,17 +201,18 @@ async def get_pod_metrics(node_id: str, pod_id: str):
 async def get_spec_metrics(
         node_id: str,
         pod_id: str,
-        metrics_id: str
+        metric_id: str
 ):
+    supply_agent, demand_agent = init_graph_base()
     query = demand_agent.specific_pod_metric(
         node_id,
         pod_id,
-        metrics_id
+        metric_id
     )
     tms_table = demand_agent.emit_transaction(query)[0]['origin']
     records = aces_metrics.get_metric_tms(
         table_name=tms_table,
-        metric=metrics_id,
+        metric=metric_id,
         node=node_id,
         pod=pod_id
     )
@@ -199,12 +221,13 @@ async def get_spec_metrics(
             "time": record[0],
             "value": record[1]
         } for record in records]
-
+    demand_agent.session.close()
     return tms
 
 
 @app.get('/init')
 async def init_catalogue():
+    supply_agent, demand_agent = init_graph_base()
     query_emdc = supply_agent.insert_emdc(
         emdc_id="this_emdc",
         location="localhost"
@@ -218,12 +241,13 @@ async def init_catalogue():
     supply_agent.exec(query_cluster)
     query_node = supply_agent.insert_node(
         cluster_id="this_cluster",
-        node_id="this_node",
+        node_id="node1",
         node_status="ACTIVE",
-        cpu_id="this_node_cpu",
-        gpu_id="this_node_gpu",
+        cpu_id="node1_cpu",
+        gpu_id="node1_gpu",
         cores=4
     )
     supply_agent.exec(query_node)
+    supply_agent.session.close()
     return {"msg": "Init was finalized"}
 # uvicorn api:app --reload --host 0.0.0.0

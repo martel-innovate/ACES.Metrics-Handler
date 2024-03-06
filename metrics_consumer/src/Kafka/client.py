@@ -44,7 +44,7 @@ class KafkaObject(object):
         if metric_name.startswith("container"):
             if "pod" in result.keys():
                 query = mem_obj.insert_pod_metric(
-                    node_id="this_node",
+                    node_id="node1",
                     pod_id=result["pod"],
                     name=metric_name,
                     timeseries_origin="metrics_values"
