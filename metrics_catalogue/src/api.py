@@ -202,4 +202,28 @@ async def get_spec_metrics(
 
     return tms
 
+
+@app.get('/init')
+async def init_catalogue():
+    query_emdc = supply_agent.insert_emdc(
+        emdc_id="this_emdc",
+        location="localhost"
+    )
+    supply_agent.exec(query_emdc)
+    query_cluster = supply_agent.insert_cluster(
+        emdc_id="this_emdc",
+        cluster_id="this_cluster",
+        node_count=1
+    )
+    supply_agent.exec(query_cluster)
+    query_node = supply_agent.insert_node(
+        cluster_id="this_cluster",
+        node_id="this_node",
+        node_status="ACTIVE",
+        cpu_id="this_node_cpu",
+        gpu_id="this_node_gpu",
+        cores=4
+    )
+    supply_agent.exec(query_node)
+    return {"msg": "Init was finalized"}
 # uvicorn api:app --reload --host 0.0.0.0
