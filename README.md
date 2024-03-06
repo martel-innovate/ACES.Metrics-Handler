@@ -1,4 +1,6 @@
-# Aces Federated Storage & Metrics Catalogue
+# Aces Metrics Hanlder
+Will operate in the EMDC level to extract metrics and efficiently organize them.
+Licensed under MIT license
 
 ### Key Components
 + `Storage Components`: Object Storage (MinIO), Timeseries DB (TimescaleDB), Graph Store (Neo4j)
