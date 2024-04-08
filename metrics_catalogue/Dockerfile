@@ -12,6 +12,7 @@ RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
 COPY storage/graph_base ./graph_base
 COPY storage/timescaledb ./timescaledb
+COPY storage/object ./object
 COPY metrics_catalogue/src .
 
 RUN poetry install

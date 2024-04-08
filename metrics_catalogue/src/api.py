@@ -10,8 +10,10 @@ from fastapi import FastAPI
 from graph_base.demand import DemandGraph
 from graph_base.supply import SupplyGraph
 from timescaledb.client import AcesMetrics
+from object.client import MinioObject
 
-from settings import NEO4J_HOST, NEO4J_USER, NEO4J_PASS, TSCALE_HOST, TSCALE_USER, TSCALE_DB, TSCALE_PASS
+from settings import NEO4J_HOST, NEO4J_USER, NEO4J_PASS, TSCALE_HOST, TSCALE_USER, TSCALE_DB, TSCALE_PASS, \
+    MINIO_ENDPOINT, MINIO_PORT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, BUCKET_NAME
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -25,6 +27,15 @@ aces_metrics = AcesMetrics(
     database=TSCALE_DB,
     password=TSCALE_PASS
 )
+
+minio_object = MinioObject(
+    endpoint=MINIO_ENDPOINT,
+    port=MINIO_PORT,
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    bucket_name=BUCKET_NAME
+)
+
 
 def init_graph_base():
     supply_agent = SupplyGraph(
@@ -250,4 +261,14 @@ async def init_catalogue():
     supply_agent.exec(query_node)
     supply_agent.session.close()
     return {"msg": "Init was finalized"}
+
+
+@app.get('/nodes/{node_id}/pods/{pod_id}/history/')
+async def get_node_hist(node_id: str, pod_id: str):
+    results = minio_object.list_objects_(
+        bucket_name=BUCKET_NAME,
+        prefix=f"{node_id}/{pod_id}/"
+    )
+    return results
+
 # uvicorn api:app --reload --host 0.0.0.0

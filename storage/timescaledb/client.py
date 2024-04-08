@@ -1,4 +1,5 @@
 import psycopg2
+import pandas as pd
 
 
 class TimeScaleDB(object):
@@ -77,3 +78,4 @@ class AcesMetrics(TimeScaleDB):
         )
         records = self.cursor.fetchall()
         return records
+

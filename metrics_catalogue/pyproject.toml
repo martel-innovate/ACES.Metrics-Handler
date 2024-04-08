@@ -12,6 +12,8 @@ fastapi = "^0.110.0"
 neo4j = "^5.18.0"
 psycopg2-binary = "^2.9.9"
 uvicorn = "^0.27.1"
+minio = "^7.2.5"
+pandas = "^2.2.1"
 
 
 [build-system]
