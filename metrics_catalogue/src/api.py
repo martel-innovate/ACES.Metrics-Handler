@@ -9,6 +9,7 @@ from fastapi import FastAPI
 
 from graph_base.demand import DemandGraph
 from graph_base.supply import SupplyGraph
+from graph_base.api_client import ApiClient
 from timescaledb.client import AcesMetrics
 from object.client import MinioObject
 
@@ -271,4 +272,25 @@ async def get_node_hist(node_id: str, pod_id: str):
     )
     return results
 
+
+@app.get('/nodes/{node_id}/pods/{pod_id}/metric/{metric_id}/history/')
+async def get_node_metric_hist(node_id: str, pod_id: str, metric_id: str):
+    results = minio_object.list_objects_(
+        bucket_name=BUCKET_NAME,
+        prefix=f"{node_id}/{pod_id}/{metric_id}",
+        recursive=True
+    )
+    return results
+
+
+@app.get('/historical/storage/pods')
+async def get_historical_data_links():
+    api_client = ApiClient(
+        neo4j_host=NEO4J_HOST,
+        neo4j_user=NEO4J_USER,
+        neo4j_pass=NEO4J_PASS
+    )
+    results = api_client.get_pods_in_history()
+    api_client.session.close()
+    return results
 # uvicorn api:app --reload --host 0.0.0.0

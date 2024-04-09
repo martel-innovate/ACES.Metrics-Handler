@@ -79,3 +79,27 @@ class AcesMetrics(TimeScaleDB):
         records = self.cursor.fetchall()
         return records
 
+    def fetch_unique_pods(
+            self,
+            table_name,
+            node
+    ):
+        self.cursor.execute(
+            f"""SELECT DISTINCT pod FROM {table_name} WHERE node='{node}'"""
+        )
+        records = self.cursor.fetchall()
+        pods = [pod_tuple[0] for pod_tuple in records]
+        return pods
+
+    def fetch_pod_metrics(
+            self,
+            table_name,
+            node,
+            pod
+    ):
+        self.cursor.execute(
+            f"""SELECT DISTINCT metric FROM {table_name} WHERE node='{node}' AND pod='{pod}'"""
+        )
+        records = self.cursor.fetchall()
+        metrics = [metric_tuple[0] for metric_tuple in records]
+        return metrics
