@@ -1,3 +1,5 @@
+import datetime
+
 import psycopg2
 import pandas as pd
 
@@ -103,3 +105,37 @@ class AcesMetrics(TimeScaleDB):
         records = self.cursor.fetchall()
         metrics = [metric_tuple[0] for metric_tuple in records]
         return metrics
+
+    def metrics_value_range(
+            self,
+            table_name,
+            node,
+            pod,
+            metric,
+            hours
+    ):
+        search_time = str(datetime.datetime.now() - datetime.timedelta(hours=hours))
+        query = f"""
+            SELECT time, value from {table_name} 
+            WHERE node='{node}' AND pod='{pod}' AND metric='{metric}'
+            AND time >= '{search_time}'
+            """
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        return records
+
+    def delete_metrics_in_range(
+            self,
+            table_name,
+            node,
+            pod,
+            metric,
+            hours
+    ):
+        search_time = str(datetime.datetime.now() - datetime.timedelta(hours=hours))
+        query = f"""
+            DELETE from {table_name}
+            WHERE node='{node}' AND pod='{pod}' AND metric='{metric}'
+            AND time >= '{search_time}'
+        """
+        self.cursor.execute(query)

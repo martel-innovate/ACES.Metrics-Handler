@@ -20,7 +20,19 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
 
-app = FastAPI()
+tags_metadata = [
+    {"name": "Init Phase", "description": "Initialize Metrics Management"},
+    {"name": "EMDC APIs", "description": "APIs to manage EMDC Info"},
+    {"name": "Cluster APIs", "description": "APIs to manage Clusters"},
+    {"name": "Node APIs", "description": "APIs to manage Nodes"},
+    {"name": "Pod APIs", "description": "APIs to manage Pods"},
+    {"name": "Metric APIs", "description": "APIs to manage Metrics"},
+    {"name": "Metrics in Pods APIs", "description": "APIs to manage Metrics related to Pods"},
+    {"name": "Historical", "description": "APIs to manage historic information"},
+
+]
+
+app = FastAPI(openapi_tags=tags_metadata)
 
 aces_metrics = AcesMetrics(
     host=TSCALE_HOST,
@@ -95,7 +107,7 @@ class NodeBody(BaseModel):
     gpu: Optional[GPUBody] = None
 
 
-@app.post('/set/emdcs')
+@app.post('/set/emdcs', tags=["EMDC APIs"])
 async def insert_emdc(item_body: EMDCBody):
     supply_agent, demand_agent = init_graph_base()
     this_body = item_body.__dict__
@@ -109,7 +121,7 @@ async def insert_emdc(item_body: EMDCBody):
     return {"msg": "EMDC inserted"}, 201
 
 
-@app.post('/set/emdcs/{emdc_id}/clusters')
+@app.post('/set/emdcs/{emdc_id}/clusters', tags=["EMDC APIs"])
 async def insert_cluster(cluster_body: ClusterBody, emdc_id: str):
     this_cluster_body = cluster_body.__dict__
     supply_agent, demand_agent = init_graph_base()
@@ -127,7 +139,7 @@ async def insert_cluster(cluster_body: ClusterBody, emdc_id: str):
     return {"msg": "Cluster inserted"}, 201
 
 
-@app.post('/set/cluster/{cluster_id}/nodes')
+@app.post('/set/cluster/{cluster_id}/nodes', tags=["Cluster APIs"])
 async def insert_node(node_body: NodeBody, cluster_id: str):
     node_input = node_body
     supply_agent, demand_agent = init_graph_base()
@@ -145,7 +157,7 @@ async def insert_node(node_body: NodeBody, cluster_id: str):
     return {"msg": "Node inserted"}, 201
 
 
-@app.get('/cluster/{cluster_id}')
+@app.get('/cluster/{cluster_id}', tags=["Cluster APIs"])
 async def get_cluster(cluster_id: str):
     supply_agent, demand_agent = init_graph_base()
     query = supply_agent.get_cluster_info(cluster_id=cluster_id)
@@ -158,7 +170,7 @@ async def get_cluster(cluster_id: str):
     return cluster_info, 200
 
 
-@app.get('/nodes/{node_id}')
+@app.get('/nodes/{node_id}', tags=["Node APIs"])
 async def get_node(node_id: str):
     supply_agent, demand_agent = init_graph_base()
     query = supply_agent.get_node_info(node_id)
@@ -175,7 +187,7 @@ async def get_node(node_id: str):
     return node_info
 
 
-@app.get('/nodes/{node_id}/pods')
+@app.get('/nodes/{node_id}/pods', tags=["Pod APIs"])
 async def get_node_pods(node_id: str):
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_node_pods(node_id)
@@ -189,7 +201,7 @@ async def get_node_pods(node_id: str):
     return list_of_res
 
 
-@app.get('/metrics')
+@app.get('/metrics', tags=["Metric APIs"])
 async def get_metrics():
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_list_of_metrics()
@@ -199,7 +211,7 @@ async def get_metrics():
     return list_of_metrics
 
 
-@app.get('/nodes/{node_id}/pod/{pod_id}/metrics')
+@app.get('/nodes/{node_id}/pod/{pod_id}/metrics', tags=["Metrics in Pods APIs"])
 async def get_pod_metrics(node_id: str, pod_id: str):
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_pod_metrics(node_id, pod_id)
@@ -209,7 +221,7 @@ async def get_pod_metrics(node_id: str, pod_id: str):
     return pod_metrics
 
 
-@app.get('/nodes/{node_id}/pod/{pod_id}/metrics/{metric_id}')
+@app.get('/nodes/{node_id}/pod/{pod_id}/metrics/{metric_id}', tags=["Metrics in Pods APIs"])
 async def get_spec_metrics(
         node_id: str,
         pod_id: str,
@@ -237,7 +249,7 @@ async def get_spec_metrics(
     return tms
 
 
-@app.get('/init')
+@app.get('/init', tags=["Init Phase"])
 async def init_catalogue():
     supply_agent, demand_agent = init_graph_base()
     query_emdc = supply_agent.insert_emdc(
@@ -264,7 +276,7 @@ async def init_catalogue():
     return {"msg": "Init was finalized"}
 
 
-@app.get('/nodes/{node_id}/pods/{pod_id}/history/')
+@app.get('/nodes/{node_id}/pods/{pod_id}/history/', tags=["Historical"])
 async def get_node_hist(node_id: str, pod_id: str):
     results = minio_object.list_objects_(
         bucket_name=BUCKET_NAME,
@@ -273,7 +285,7 @@ async def get_node_hist(node_id: str, pod_id: str):
     return results
 
 
-@app.get('/nodes/{node_id}/pods/{pod_id}/metric/{metric_id}/history/')
+@app.get('/nodes/{node_id}/pods/{pod_id}/metric/{metric_id}/history/', tags=["Historical"])
 async def get_node_metric_hist(node_id: str, pod_id: str, metric_id: str):
     results = minio_object.list_objects_(
         bucket_name=BUCKET_NAME,
@@ -283,7 +295,7 @@ async def get_node_metric_hist(node_id: str, pod_id: str, metric_id: str):
     return results
 
 
-@app.get('/historical/storage/pods')
+@app.get('/historical/storage/pods', tags=["Historical"])
 async def get_historical_data_links():
     api_client = ApiClient(
         neo4j_host=NEO4J_HOST,
