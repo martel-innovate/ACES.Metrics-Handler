@@ -22,7 +22,7 @@ spec:
         - command:
             - /bin/sh
             - -c
-            - ' /usr/bin/mc config host add aces http://minio admin martel2024; /usr/bin/mc mb aces/prefect; /usr/bin/mc mb aces/mlflow; /usr/bin/mc mb aces/emdc; /usr/bin/mc policy set public aces/mlflow; /usr/bin/mc policy set public aces/prefect; /usr/bin/mc policy set public aces/emdc; exit 0; '
+            - ' /usr/bin/mc config host add aces http://minio admin martel2024; /usr/bin/mc mb aces/prefect; /usr/bin/mc mb aces/emdc;  /usr/bin/mc policy set public aces/prefect; /usr/bin/mc policy set public aces/emdc; exit 0; '
           image: minio/mc
           name: mc
           resources: {}
