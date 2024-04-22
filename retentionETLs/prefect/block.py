@@ -12,7 +12,7 @@ MINIO_SETTINGS = {
 k8s = KubernetesJob(
     image="prefecthq/prefect:2.13.2-python3.10",
     image_pull_policy="Always",
-    env={"EXTRA_PIP_PACKAGES": "s3fs requests pandas minio seaborn mlflow matplotlib boto3"},
+    env={"EXTRA_PIP_PACKAGES": "s3fs requests pandas neo4j psycopg2-binary boto3"},
 )
 k8s.save("prod", overwrite=True)
 

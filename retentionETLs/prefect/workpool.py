@@ -4,7 +4,7 @@ import json
 url = "http://prefect-server:4200/api/work_pools/"
 
 payload = json.dumps({
-  "name": "horse",
+  "name": "aces",
   "description": "",
   "type": "kubernetes",
   "is_paused": False,
