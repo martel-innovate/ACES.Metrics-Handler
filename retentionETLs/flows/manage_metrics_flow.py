@@ -55,7 +55,3 @@ def manage_metrics_flow():
             stored_df_obj = move_to_minio(df, metric, pod)
             assoc_obj_with_neo(stored_df_obj, metric, pod)
             delete_metrics(pod, metric)
-
-
-if __name__ == "__main__":
-    manage_metrics_flow()

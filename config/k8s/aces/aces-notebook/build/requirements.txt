@@ -1,7 +1,0 @@
-s3fs
-minio
-boto3
-prefect
-neo4j
-pandas
-psycopg2-binary

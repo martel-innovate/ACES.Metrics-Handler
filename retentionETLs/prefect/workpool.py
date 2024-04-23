@@ -34,7 +34,7 @@ payload = json.dumps({
               "serviceAccountName": "{{ service_account_name }}",
               "containers": [
                 {
-                  "name": "prefect-job",
+                  "name": "test_conf-job",
                   "env": "{{ env }}",
                   "image": "{{ image }}",
                   "imagePullPolicy": "{{ image_pull_policy }}",
@@ -89,7 +89,7 @@ payload = json.dumps({
         "image": {
           "title": "Image",
           "description": "The image reference of a container image to use for created jobs. If not set, the latest Prefect image will be used.",
-          "example": "docker.io/prefecthq/prefect:2-latest",
+          "example": "docker.io/prefecthq/test_conf:2-latest",
           "type": "string"
         },
         "service_account_name": {

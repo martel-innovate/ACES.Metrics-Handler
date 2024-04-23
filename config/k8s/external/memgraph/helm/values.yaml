@@ -1,5 +1,0 @@
-service:
-  type: ClusterIP
-memgraphConfig:
-  - "--also-log-to-stderr=true"
-  - "--log-level=TRACE"
