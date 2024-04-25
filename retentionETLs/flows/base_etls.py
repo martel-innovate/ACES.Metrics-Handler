@@ -61,8 +61,11 @@ def parse_timeseries(
         hours=hours
     )
     df = pd.DataFrame(records)
-    df.columns = ["timestamp", "value"]
-    df['metric'] = metric
+    if df.empty:
+        df = None
+    else:
+        df.columns = ["timestamp", "value"]
+        df['metric'] = metric
     return df
 
 

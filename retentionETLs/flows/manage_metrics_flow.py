@@ -1,4 +1,4 @@
-from prefect import flow, get_run_logger, task
+from prefect import flow, get_run_logger, task, get_run_logger
 from prefect import variables
 from base_etls import get_unique_pod_names, get_pod_metrics, parse_timeseries, \
     persist_to_minio, link_object_with_neo4j, delete_metrics_values
@@ -48,12 +48,18 @@ def delete_metrics(
 
 @flow
 def manage_metrics_flow():
+    this_logger = get_run_logger()
     pods = get_pods()
     extract_metrics_before_x_hours = int(variables.get('extract_metrics_from', default=1))
     for pod in pods:
+        this_logger.info(f"ETLs for Pod with name: {pod}")
         this_pod_metrics = get_metrics(pod)
         for metric in this_pod_metrics:
+            this_logger.info(f"Metric: {metric} and Pod:{pod}")
             df = get_metric_df(metric, pod, extract_metrics_before_x_hours)
-            stored_df_obj = move_to_minio(df, metric, pod)
-            assoc_obj_with_neo(stored_df_obj, metric, pod)
-            delete_metrics(pod, metric, extract_metrics_before_x_hours)
+            if df is None:
+                this_logger.info(f"result df is empty. No records for Metric: {metric}")
+            else:
+                stored_df_obj = move_to_minio(df, metric, pod)
+                assoc_obj_with_neo(stored_df_obj, metric, pod)
+                delete_metrics(pod, metric, extract_metrics_before_x_hours)
