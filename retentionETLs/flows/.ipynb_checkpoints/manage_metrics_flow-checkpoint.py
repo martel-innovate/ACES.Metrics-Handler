@@ -1,5 +1,5 @@
 from prefect import flow, get_run_logger, task
-from prefect import variables
+from prefect.variables import Variable
 from base_etls import get_unique_pod_names, get_pod_metrics, parse_timeseries, \
     persist_to_minio, link_object_with_neo4j, delete_metrics_values
 
@@ -17,11 +17,10 @@ def get_metrics(pod_name):
 
 
 @task
-def get_metric_df(metric_name, pod_name, hours):
+def get_metric_df(metric_name, pod_name):
     df = parse_timeseries(
         metric=metric_name,
         pod=pod_name,
-        hours=hours
     )
     return df
 
@@ -41,7 +40,7 @@ def assoc_obj_with_neo(obj, metric, pod):
 def delete_metrics(
         pod,
         metric,
-        hours
+        hours=1
 ):
     delete_metrics_values(pod, metric, hours)
 
@@ -49,11 +48,10 @@ def delete_metrics(
 @flow
 def manage_metrics_flow():
     pods = get_pods()
-    extract_metrics_before_x_hours = int(variables.get('extract_metrics_from', default=1))
     for pod in pods:
         this_pod_metrics = get_metrics(pod)
         for metric in this_pod_metrics:
-            df = get_metric_df(metric, pod, extract_metrics_before_x_hours)
+            df = get_metric_df(metric, pod)
             stored_df_obj = move_to_minio(df, metric, pod)
             assoc_obj_with_neo(stored_df_obj, metric, pod)
-            delete_metrics(pod, metric, extract_metrics_before_x_hours)
+            delete_metrics(pod, metric)

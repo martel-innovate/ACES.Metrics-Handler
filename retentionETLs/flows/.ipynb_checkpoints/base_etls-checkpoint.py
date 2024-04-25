@@ -50,15 +50,13 @@ def get_pod_metrics(pod_name):
 def parse_timeseries(
         metric,
         pod,
-        hours,
         node=node
 ):
-    records = aces_metrics.metrics_value_range(
+    records = aces_metrics.get_metric_tms(
         table_name="metrics_values",
         metric=metric,
         node=node,
         pod=pod,
-        hours=hours
     )
     df = pd.DataFrame(records)
     df.columns = ["timestamp", "value"]

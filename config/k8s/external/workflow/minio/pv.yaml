@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: minio-aces-tenant-pv
+  name: aces-pv
   labels:
     type: local
 spec:
@@ -11,4 +11,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/Users/panagiotiskapsalis/PycharmProjects/MARTEL-PROJECTS/AcesDataManager/pvs/minio"
+    path: "/Users/panagiotiskapsalis/PycharmProjects/MARTEL-PROJECTS/AcesDataManager/pvs/aces-tenant"

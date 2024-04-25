@@ -3,6 +3,6 @@ agent:
     prefectTag: 2.13.2-python3.10-kubernetes
   apiConfig: "server"
   config:
-    workPool: "horse"
+    workPool: "aces"
   serverApiConfig:
     apiUrl: "http://prefect-server.default.svc.cluster.local:4200/api"

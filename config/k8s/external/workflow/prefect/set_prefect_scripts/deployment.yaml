@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: set-prefect-scripts
+  name: set-prefect-scripts
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: set-prefect-scripts
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.network/mc-default: "true"
+        app: set-prefect-scripts
+    spec:
+      containers:
+        - name: set-prefect-scripts
+          image: pkapsalismartel/aces_emdc_prefect:v0.1
+status: {}
