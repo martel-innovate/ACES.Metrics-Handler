@@ -9,11 +9,11 @@ Licensed under MIT license
 + `Metrics Consumer`: Kafka Consumer which receives extracted metrics
 
 ### Installation Steps & Prerequisites
-#### Install Workflow Components
+#### 1. Install Workflow Components
 ```shell
 cd config/external/k8s/workflow
 ```
-##### Install Minio
+##### 1.1 Install Minio
 ```shell
 cd minio/
 kubectl apply -f pv.yaml
@@ -21,7 +21,7 @@ kustomize build infra | kubectl apply -f -
 cd mc/
 kubectl apply -f .
 ```
-##### Install & Configure Prefect Server
+##### 1.2 Install & Configure Prefect Server
 ```shell
 cd prefect/
 bash make_server.sh
@@ -31,7 +31,7 @@ cd ../
 bash make_agent.sh
 kubectl port-forward svc/prefect-server 4200:4200
 ```
-##### Install Jupyter Notebook
+##### 1.3 Install Jupyter Notebook
 ```shell
 cd jupyter/
 kubectl apply -f .
@@ -45,23 +45,23 @@ prefect deployment apply manage_metrics_flow-deployment.yaml
 
 
 
-#### Metrics Catalogue
+#### 2. Metrics Catalogue
 0. `How to build Metrics catalogue dockerfile` see documentation [here](metrics_catalogue/README.md)
 1. `cd /config/k8s/aces/metrics_catalogue`
 2. `kubectl apply -f .`
 
-#### Pull-push Metrics Pipeline
-##### Deploy Confluent Kafka
+#### 3. Pull-push Metrics Pipeline
+##### 3.1 Deploy Confluent Kafka
 1. `cd config/k8s/external/kafka`
 2. `kubectl apply -f .`
-##### Deploy Prometheus
+##### 3.2 Deploy Prometheus
 1. `cd config/k8s/external/prometheus`
 2. `bash setup.sh`
-##### Deploy Metrics Scraper
+##### 3.3 Deploy Metrics Scraper
 1. `cd config/k8s/external/prom-adapter`
 2. `kubectl apply -f .`
 
-#### Metrics Consumer
+#### 4. Metrics Consumer
 0. `How to build Metrics consumer dockerfile` see documentation [here](metrics_consumer/README.md)
 1. `cd /config/k8s/aces/metrics_consumer`
 2. `kubectl apply -f .`

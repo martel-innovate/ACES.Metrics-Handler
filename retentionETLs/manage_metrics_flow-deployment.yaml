@@ -3,13 +3,16 @@
 ###
 name: manage_metrics_flow
 description: null
-version: 2d7669a350fbda37b514d50fcd539b83
+version: f512026926db5208368d4603783b9929
 # The work queue that will handle this deployment's runs
 work_queue_name: default
 work_pool_name: aces
 tags: []
 parameters: {}
-schedule: null
+schedule:
+  interval: 10800.0
+  anchor_date: '2024-04-25T09:12:56.111000+00:00'
+  timezone: UTC
 is_schedule_active: true
 infra_overrides: {}
 
@@ -76,6 +79,6 @@ parameter_openapi_schema:
   properties: {}
   required: null
   definitions: null
-timestamp: '2024-04-25T07:59:18.810008+00:00'
+timestamp: '2024-04-25T13:45:32.443465+00:00'
 triggers: []
 enforce_parameter_schema: null
