@@ -147,3 +147,23 @@ class DemandGraph(GraphBase):
             MERGE (n)-[:HAS_INFO]->(node_inf)
         """
         return query
+
+    def set_status_capacity(self, json_result, node_id='node1'):
+        instance = json_result["labels"]["instance"]
+        node_details = json_result["labels"]["node"]
+        resource = json_result["labels"]["resource"]
+        unit = json_result["labels"]["unit"]
+
+        target_metric_name = f"capacity_{resource}"
+        value = json_result["value"]
+        time_stmp = json_result["timestamp"]
+
+        query = f"""
+            MATCH (n:K8SNode {{node_id: "{node_id}"}})
+            MERGE (sc:NodeStatusCapacity {{instance: "{instance}", node: "{node_details}"}})
+            MERGE (nres:NodeResource {{resource: "{resource}", unit: "{unit}", \
+            timeseries_origin: "node_metrics", metric: "{target_metric_name}"}})
+            MERGE (n)-[:HAS_CAPACITY]->(sc)
+            MERGE (sc)-[:HAS_RESOURCE]->(nres)
+        """
+        return query, target_metric_name, value, time_stmp

@@ -4,6 +4,6 @@
 
 ```shell
 docker build -f metrics_consumer/Dockerfile -t pkapsalismartel/metrics_consumer .
-docker tag pkapsalismartel/metrics_consumer:latest pkapsalismartel/metrics_consumer:v0.84
-docker push pkapsalismartel/metrics_consumer:v0.84
+docker tag pkapsalismartel/metrics_consumer:latest pkapsalismartel/metrics_consumer:v0.85
+docker push pkapsalismartel/metrics_consumer:v0.85
 ```

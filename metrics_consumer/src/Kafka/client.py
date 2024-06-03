@@ -103,6 +103,17 @@ class KafkaObject(object):
                 node_role=json_result["labels"]["role"]
             )
             mem_obj.bolt_transaction(query)
+        elif metric_name == "kube_node_status_capacity":
+            query, target_metric_name, value, time_stmp = mem_obj.set_status_capacity(
+                json_result
+            )
+            mem_obj.bolt_transaction(query)
+            aces_metrics.insert_node_metrics(
+                node_table_name="node_metrics",
+                time=time_stmp,
+                metric=target_metric_name,
+                value=value
+            )
 
     def producer(
             self,
