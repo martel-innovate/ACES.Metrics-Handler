@@ -95,3 +95,17 @@ class DemandGraph(GraphBase):
             RETURN m.timeseries_origin as origin
         """
         return query
+
+    def make_easy_node_metrics(
+            self,
+            node_id,
+            node_metric,
+            instance,
+            node_details
+    ):
+        query = f"""
+            MATCH (n:K8SNode {{node_id: "{node_id}"}})
+            MERGE (node_m:NodeMetric {{name: "{node_metric}", timeseries_origin: "node_metrics"}})
+            ON CREATE SET node_m.instance = "{instance}", node_m.node = "{node_details}"
+            MERGE (n)-[:HAS_NODE_METRICS]->(node_m)
+        """

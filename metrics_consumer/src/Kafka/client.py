@@ -36,6 +36,35 @@ class KafkaObject(object):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger('kafka-object')
 
+    def node_metrics_handler(
+            self,
+            metric_name,
+            json_result,
+            mem_obj,
+            aces_metrics
+    ):
+        prefix = "kube_node"
+        easy_metrics1 = [
+            f"{prefix}_spec_unschedulable",
+            f"{prefix}_created",
+            f"{prefix}_status_allocatable",
+        ]
+
+        if metric_name in easy_metrics1:
+            query = mem_obj.make_easy_node_metrics(
+                node_id="node1",
+                node_metric=metric_name,
+                instance=json_result["labels"]["instance"],
+                node_details=json_result["labels"]["node"]
+            )
+            mem_obj.bolt_transaction(query)
+            aces_metrics.insert_node_metrics(
+                node_table_name="node_metrics",
+                time=json_result["labels"]["timestamp"],
+                metric=metric_name,
+                value=json_result["value"]
+            )
+
     def handler(self, msg, mem_obj, aces_metrics):
         json_result = json.loads(msg.value().decode())
         # dict_keys(['labels', 'name', 'timestamp', 'value'])
@@ -58,6 +87,8 @@ class KafkaObject(object):
                     value=json_result['value'],
                     node="node1"
                 )
+        elif metric_name.startswith("kube_node_"):
+            pass
 
     def producer(
             self,

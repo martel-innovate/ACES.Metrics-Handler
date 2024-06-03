@@ -52,6 +52,21 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(create_hyper_table)
         self.close_client()
 
+    def init_aces_node_hyper_table(
+            self,
+            node_table_name
+    ):
+        table_creation_query = f"""
+            CREATE TABLE {node_table_name} ( 
+                time TIMESTAMPTZ NOT NULL,
+                metric TEXT,
+                value DOUBLE PRECISION
+            )"""
+        create_hyper_table = f"""SELECT create_hypertable('{node_table_name}', by_range('time'))"""
+        self.cursor.execute(table_creation_query)
+        self.cursor.execute(create_hyper_table)
+        self.close_client()
+
     def insert_metrics(
             self,
             table_name,
@@ -64,6 +79,19 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(
             f"INSERT INTO {table_name} (time, metric, node, pod, value) VALUES (%s, %s, %s, %s, %s);",
             (time, metric, node, pod, value)
+        )
+        self.close_client()
+
+    def insert_node_metrics(
+            self,
+            node_table_name,
+            time,
+            metric,
+            value
+    ):
+        self.cursor.execute(
+            f"INSERT INTO {node_table_name} (time, metric, value) VALUES (%s, %s, %s);",
+            (time, metric, value)
         )
         self.close_client()
 
