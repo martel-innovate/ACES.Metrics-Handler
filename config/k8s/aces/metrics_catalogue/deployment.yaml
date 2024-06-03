@@ -6,9 +6,9 @@ metadata:
   name: metrics-catalogue
 spec:
   ports:
-    - name: "8000"
-      port: 8000
-      targetPort: 8000
+    - name: "8001"
+      port: 8001
+      targetPort: 8001
   selector:
     app: metrics-catalogue
 status:
@@ -49,11 +49,11 @@ spec:
               value: neo4j
             - name: NEO4J_PASS
               value: neo4j290292
-          image: pkapsalismartel/metrics_catalogue:v0.15
+          image: pkapsalismartel/metrics_catalogue:v0.18
           name: metrics-catalogue
           ports:
-            - containerPort: 8000
-              hostPort: 8000
+            - containerPort: 8001
+              hostPort: 8001
               protocol: TCP
           resources: {}
       hostname: metrics-catalogue

@@ -22,12 +22,7 @@ log = logging.getLogger(__name__)
 
 tags_metadata = [
     {"name": "Init Phase", "description": "Initialize Metrics Management"},
-    {"name": "EMDC APIs", "description": "APIs to manage EMDC Info"},
-    {"name": "Cluster APIs", "description": "APIs to manage Clusters"},
-    {"name": "Node APIs", "description": "APIs to manage Nodes"},
-    {"name": "Pod APIs", "description": "APIs to manage Pods"},
-    {"name": "Metric APIs", "description": "APIs to manage Metrics"},
-    {"name": "Metrics in Pods APIs", "description": "APIs to manage Metrics related to Pods"},
+    {"name": "Pod Metrics APIs", "description": "APIs to manage Pods"},
     {"name": "Historical", "description": "APIs to manage historic information"},
 
 ]
@@ -73,17 +68,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class EMDCBody(BaseModel):
-    emdc_id: str = Field(..., description="EMDC ID")
-    location: str = Field(..., description="EMDC Location")
-
-
-class ClusterBody(BaseModel):
-    cluster_id: str = Field(..., description="EMDC cluster ID")
-    node_count: int = Field(..., description="Number of Cluster Nodes")
-
-
 class NodeStatus(Enum):
     Active = 'Active'
     Inactive = 'Inactive'
@@ -107,90 +91,10 @@ class NodeBody(BaseModel):
     gpu: Optional[GPUBody] = None
 
 
-@app.post('/set/emdcs', tags=["EMDC APIs"])
-async def insert_emdc(item_body: EMDCBody):
+@app.get('/nodes/pods', tags=["Pod Metrics APIs"])
+async def get_node_pods():
     supply_agent, demand_agent = init_graph_base()
-    this_body = item_body.__dict__
-    log.info(f"insert EMDC with ID: {this_body['emdc_id']} and Location: {this_body['location']}")
-    query = supply_agent.insert_emdc(
-        emdc_id=this_body["emdc_id"],
-        location=this_body["location"]
-    )
-    supply_agent.exec(query)
-    supply_agent.session.close()
-    return {"msg": "EMDC inserted"}, 201
-
-
-@app.post('/set/emdcs/{emdc_id}/clusters', tags=["EMDC APIs"])
-async def insert_cluster(cluster_body: ClusterBody, emdc_id: str):
-    this_cluster_body = cluster_body.__dict__
-    supply_agent, demand_agent = init_graph_base()
-    log.info(
-        f"insert Cluster with ID: {this_cluster_body['cluster_id']} and"
-        f" Location: {this_cluster_body['node_count']} to EMDC {emdc_id}"
-    )
-    query = supply_agent.insert_cluster(
-        emdc_id=emdc_id,
-        cluster_id=this_cluster_body["cluster_id"],
-        node_count=this_cluster_body["node_count"]
-    )
-    supply_agent.bolt_transaction(query)
-    supply_agent.session.close()
-    return {"msg": "Cluster inserted"}, 201
-
-
-@app.post('/set/cluster/{cluster_id}/nodes', tags=["Cluster APIs"])
-async def insert_node(node_body: NodeBody, cluster_id: str):
-    node_input = node_body
-    supply_agent, demand_agent = init_graph_base()
-    log.info(f"Insert Node with ID: {node_input.node_id} to cluster with ID: {cluster_id}")
-    query = supply_agent.insert_node(
-        cluster_id=cluster_id,
-        node_id=node_input.node_id,
-        node_status=node_input.status.value,
-        cpu_id=node_input.cpu.cpu_id,
-        gpu_id=node_input.gpu.gpu_id,
-        cores=node_input.cpu.cores
-    )
-    supply_agent.exec(query)
-    supply_agent.session.close()
-    return {"msg": "Node inserted"}, 201
-
-
-@app.get('/cluster/{cluster_id}', tags=["Cluster APIs"])
-async def get_cluster(cluster_id: str):
-    supply_agent, demand_agent = init_graph_base()
-    query = supply_agent.get_cluster_info(cluster_id=cluster_id)
-    results = supply_agent.emit_transaction(query)
-    this_result = results[0]
-    cluster_info = this_result['cl']._properties
-    nodes = [n._properties for n in this_result['nodes']]
-    cluster_info['nodes'] = nodes
-    supply_agent.session.close()
-    return cluster_info, 200
-
-
-@app.get('/nodes/{node_id}', tags=["Node APIs"])
-async def get_node(node_id: str):
-    supply_agent, demand_agent = init_graph_base()
-    query = supply_agent.get_node_info(node_id)
-    results = supply_agent.emit_transaction(query)
-    this_result = results[0]
-    node_info = this_result['n']._properties
-    node_info['objs'] = [
-        {
-            'type': list(obj._labels)[0],
-            'values': obj._properties
-        } for obj in this_result['objs']
-    ]
-    supply_agent.session.close()
-    return node_info
-
-
-@app.get('/nodes/{node_id}/pods', tags=["Pod APIs"])
-async def get_node_pods(node_id: str):
-    supply_agent, demand_agent = init_graph_base()
-    query = demand_agent.get_node_pods(node_id)
+    query = demand_agent.get_node_pods(node_id='node1')
     results = demand_agent.emit_transaction(query)
     list_of_pods = results[0]["list_of_pods"]
     list_of_res = list(map(
@@ -201,7 +105,7 @@ async def get_node_pods(node_id: str):
     return list_of_res
 
 
-@app.get('/metrics', tags=["Metric APIs"])
+@app.get('/pod/metrics', tags=["Pod Metrics APIs"])
 async def get_metrics():
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_list_of_metrics()
@@ -211,8 +115,9 @@ async def get_metrics():
     return list_of_metrics
 
 
-@app.get('/nodes/{node_id}/pod/{pod_id}/metrics', tags=["Metrics in Pods APIs"])
-async def get_pod_metrics(node_id: str, pod_id: str):
+@app.get('/nodes/pod/{pod_id}/metrics', tags=["Pod Metrics APIs"])
+async def get_pod_metrics(pod_id: str):
+    node_id = 'node1'
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_pod_metrics(node_id, pod_id)
     results = demand_agent.emit_transaction(query)[0]['pod_metrics']
@@ -221,12 +126,12 @@ async def get_pod_metrics(node_id: str, pod_id: str):
     return pod_metrics
 
 
-@app.get('/nodes/{node_id}/pod/{pod_id}/metrics/{metric_id}', tags=["Metrics in Pods APIs"])
+@app.get('/nodes/pod/{pod_id}/metrics/{metric_id}', tags=["Pod Metrics APIs"])
 async def get_spec_metrics(
-        node_id: str,
         pod_id: str,
         metric_id: str
 ):
+    node_id = 'node1'
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.specific_pod_metric(
         node_id,
@@ -276,8 +181,9 @@ async def init_catalogue():
     return {"msg": "Init was finalized"}
 
 
-@app.get('/nodes/{node_id}/pods/{pod_id}/history/', tags=["Historical"])
+@app.get('/nodes/pods/{pod_id}/history/', tags=["Historical"])
 async def get_node_hist(node_id: str, pod_id: str):
+    node_id = 'node1'
     results = minio_object.list_objects_(
         bucket_name=BUCKET_NAME,
         prefix=f"{node_id}/{pod_id}/"
@@ -285,8 +191,9 @@ async def get_node_hist(node_id: str, pod_id: str):
     return results
 
 
-@app.get('/nodes/{node_id}/pods/{pod_id}/metric/{metric_id}/history/', tags=["Historical"])
+@app.get('/nodes/pods/{pod_id}/metric/{metric_id}/history/', tags=["Historical"])
 async def get_node_metric_hist(node_id: str, pod_id: str, metric_id: str):
+    node_id = 'node1'
     results = minio_object.list_objects_(
         bucket_name=BUCKET_NAME,
         prefix=f"{node_id}/{pod_id}/{metric_id}",

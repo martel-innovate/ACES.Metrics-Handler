@@ -16,4 +16,4 @@ COPY storage/object ./object
 COPY metrics_catalogue/src .
 
 RUN poetry install
-ENTRYPOINT ["poetry", "run", "uvicorn", "api:app", "--port", "8000", "--reload", "--host", "0.0.0.0"]
+ENTRYPOINT ["poetry", "run", "uvicorn", "api:app", "--port", "8001", "--reload", "--host", "0.0.0.0"]
