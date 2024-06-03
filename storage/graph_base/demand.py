@@ -105,7 +105,45 @@ class DemandGraph(GraphBase):
     ):
         query = f"""
             MATCH (n:K8SNode {{node_id: "{node_id}"}})
-            MERGE (node_m:NodeMetric {{name: "{node_metric}", timeseries_origin: "node_metrics"}})
-            ON CREATE SET node_m.instance = "{instance}", node_m.node = "{node_details}"
+            MERGE (node_m:NodeMetric {{name: "{node_metric}", timeseries_origin: "node_metrics", \
+            instance: "{instance}", node:"{node_details}"}})
             MERGE (n)-[:HAS_NODE_METRICS]->(node_m)
         """
+        return query
+
+    def set_kube_node_role(
+            self,
+            node_id,
+            node_metric,
+            instance,
+            node_details,
+            node_role
+    ):
+        query = f"""
+            MATCH (n:K8SNode {{node_id: "{node_id}"}})
+            MERGE (node_role:NodeRole {{name: "{node_metric}", instance: "{instance}", \
+            node: "{node_details}", role: "{node_role}"}})
+            MERGE (n)-[:HAS_ROLE]->(node_role)
+        """
+        return query
+
+    def set_kube_node_info(
+            self,
+            node_id,
+            node_metric,
+            instance,
+            node_details,
+            internal_ip,
+            kernel_version,
+            os_image,
+            kubelet_version,
+            kubeproxy_version
+    ):
+        query = f"""
+            MATCH (n:K8SNode {{node_id: "{node_id}"}})
+            MERGE (node_inf:NodeInfo {{name: "{node_metric}", instance: "{instance}", node: "{node_details}", \
+             internal_ip: "{internal_ip}", os_image: "{os_image}", kernel_version: "{kernel_version}", \
+             kubelet_version: "{kubelet_version}", kubeproxy_version: "{kubeproxy_version}"}})
+            MERGE (n)-[:HAS_INFO]->(node_inf)
+        """
+        return query

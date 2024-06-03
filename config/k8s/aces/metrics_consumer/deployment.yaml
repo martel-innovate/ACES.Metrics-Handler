@@ -23,7 +23,7 @@ spec:
             - name: KAFKA_PORT
               value: "29092"
             - name: GROUP_ID
-              value: pause
+              value: aces_metrics_consumer2
             - name: TSCALE_HOST
               value: timescaledb
             - name: TSCALE_NAME
@@ -38,7 +38,7 @@ spec:
               value: neo4j
             - name: NEO4J_PASS
               value: neo4j290292
-          image: pkapsalismartel/metrics_consumer:v0.6
+          image: pkapsalismartel/metrics_consumer:v0.84
           name: metrics-consumer
           resources: {}
       hostname: metrics-consumer

@@ -4,6 +4,13 @@ import logging
 import confluent_kafka
 from confluent_kafka import KafkaError, KafkaException
 
+prefix = "kube_node"
+easy_node_metrics = [
+    f"{prefix}_spec_unschedulable",
+    f"{prefix}_created",
+    f"{prefix}_status_allocatable",
+]
+
 
 class KafkaObject(object):
     def __init__(
@@ -36,35 +43,6 @@ class KafkaObject(object):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger('kafka-object')
 
-    def node_metrics_handler(
-            self,
-            metric_name,
-            json_result,
-            mem_obj,
-            aces_metrics
-    ):
-        prefix = "kube_node"
-        easy_metrics1 = [
-            f"{prefix}_spec_unschedulable",
-            f"{prefix}_created",
-            f"{prefix}_status_allocatable",
-        ]
-
-        if metric_name in easy_metrics1:
-            query = mem_obj.make_easy_node_metrics(
-                node_id="node1",
-                node_metric=metric_name,
-                instance=json_result["labels"]["instance"],
-                node_details=json_result["labels"]["node"]
-            )
-            mem_obj.bolt_transaction(query)
-            aces_metrics.insert_node_metrics(
-                node_table_name="node_metrics",
-                time=json_result["labels"]["timestamp"],
-                metric=metric_name,
-                value=json_result["value"]
-            )
-
     def handler(self, msg, mem_obj, aces_metrics):
         json_result = json.loads(msg.value().decode())
         # dict_keys(['labels', 'name', 'timestamp', 'value'])
@@ -87,8 +65,44 @@ class KafkaObject(object):
                     value=json_result['value'],
                     node="node1"
                 )
-        elif metric_name.startswith("kube_node_"):
-            pass
+        elif metric_name in easy_node_metrics:
+            self.logger.info(metric_name)
+            self.logger.info(json_result)
+            query = mem_obj.make_easy_node_metrics(
+                node_id="node1",
+                node_metric=metric_name,
+                instance=json_result["labels"]["instance"],
+                node_details=json_result["labels"]["node"]
+            )
+            mem_obj.bolt_transaction(query)
+            aces_metrics.insert_node_metrics(
+                node_table_name="node_metrics",
+                time=json_result["timestamp"],
+                metric=metric_name,
+                value=json_result["value"]
+            )
+        elif metric_name == "kube_node_info":
+            query = mem_obj.set_kube_node_info(
+                node_id="node1",
+                node_metric=metric_name,
+                instance=json_result["labels"]["instance"],
+                node_details=json_result["labels"]["node"],
+                internal_ip=json_result["labels"]["internal_ip"],
+                kernel_version=json_result["labels"]["kernel_version"],
+                os_image=json_result["labels"]["os_image"],
+                kubelet_version=json_result["labels"]["kubelet_version"],
+                kubeproxy_version=json_result["labels"]["kubeproxy_version"]
+            )
+            mem_obj.bolt_transaction(query)
+        elif metric_name == "kube_node_role":
+            query = mem_obj.set_kube_node_role(
+                node_id="node1",
+                node_metric=metric_name,
+                instance=json_result["labels"]["instance"],
+                node_details=json_result["labels"]["node"],
+                node_role=json_result["labels"]["role"]
+            )
+            mem_obj.bolt_transaction(query)
 
     def producer(
             self,
