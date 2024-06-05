@@ -22,9 +22,9 @@ log = logging.getLogger(__name__)
 
 tags_metadata = [
     {"name": "Init Phase", "description": "Initialize Metrics Management"},
-    {"name": "Pod Metrics APIs", "description": "APIs to manage Pods"},
+    {"name": "Pod Metrics APIs", "description": "APIs to manage Pod Metrics"},
     {"name": "Historical", "description": "APIs to manage historic information"},
-
+    {"name": "Node Metrics APIs", "description": "APIs to manage Node Metrics"},
 ]
 
 app = FastAPI(openapi_tags=tags_metadata)
@@ -67,6 +67,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class NodeStatus(Enum):
     Active = 'Active'
@@ -212,4 +213,48 @@ async def get_historical_data_links():
     results = api_client.get_pods_in_history()
     api_client.session.close()
     return results
+
+
+@app.get('/nodeInfo', tags=["Node Metrics APIs"])
+async def get_node_info():
+    supply_agent, demand_agent = init_graph_base()
+    query = demand_agent.get_node_info()
+    results = demand_agent.emit_transaction(query)
+    demand_agent.session.close()
+    return results
+
+
+@app.get('/nodeRole', tags=["Node Metrics APIs"])
+async def get_node_role():
+    supply_agent, demand_agent = init_graph_base()
+    query = demand_agent.get_node_role()
+    results = demand_agent.emit_transaction(query)
+    demand_agent.session.close()
+    return results
+
+
+@app.get('/nodeCapacity/topology', tags=["Node Metrics APIs"])
+async def get_node_capacity():
+    supply_agent, demand_agent = init_graph_base()
+    query = demand_agent.get_node_capacity_topology()
+    results = demand_agent.emit_transaction(query)
+    demand_agent.session.close()
+    return results
+
+
+@app.get('/nodeCapacity/resource/{resource_name}', tags=["Node Metrics APIs"])
+async def node_resources(resource_name: str):
+    supply_agent, demand_agent = init_graph_base()
+    query = demand_agent.get_resource_details(resource_name)
+    results = demand_agent.emit_transaction(query)[0]
+    if results:
+        metric_name = results["metric_name"]
+        demand_agent.session.close()
+        resource_tms = aces_metrics.fetch_node_metrics(
+            table_name="node_metrics",
+            metric=metric_name
+        )
+        results["tms"] = resource_tms
+    return results
+
 # uvicorn api:app --reload --host 0.0.0.0

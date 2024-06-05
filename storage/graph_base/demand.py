@@ -167,3 +167,37 @@ class DemandGraph(GraphBase):
             MERGE (sc)-[:HAS_RESOURCE]->(nres)
         """
         return query, target_metric_name, value, time_stmp
+
+    def get_node_info(self):
+        query = f"""
+            MATCH (n:K8SNode {{node_id: "node1"}})-[:HAS_INFO]->(ninfo:NodeInfo)
+            RETURN ninfo.instance as instance, ninfo.internal_ip as internal_ip, \
+            ninfo.kernel_version as kernel_version, ninfo.kubelet_version as kubelet_version, \
+            ninfo.kubeproxy_version as kubeproxy_version, ninfo.name as name, ninfo.node as node, \
+            ninfo.os_image as os_image
+        """
+        return query
+
+    def get_node_role(self):
+        query = """
+            MATCH (n:K8SNode {node_id: "node1"})-[:HAS_ROLE]->(nrole:NodeRole)
+            RETURN nrole.instance as instance, nrole.name as name, nrole.node as node, nrole.role as role
+        """
+        return query
+
+    def get_node_capacity_topology(self):
+        query = """
+            MATCH (n:K8SNode {node_id: "node1"})-[:HAS_CAPACITY]->(nsc:NodeStatusCapacity)
+            MATCH (nsc)-[:HAS_RESOURCE]->(nres:NodeResource)
+            RETURN nsc.instance as instance, nsc.node as node, \
+            collect({metric: nres.metric, unit: nres.unit, resource: nres.resource}) as resources
+        """
+        return query
+
+    def get_resource_details(self, resource_name):
+        query = f"""
+            MATCH (n:K8SNode {{node_id: "node1"}})-[:HAS_CAPACITY]->(nsc:NodeStatusCapacity)
+            MATCH (nsc)-[:HAS_RESOURCE]->(nres:NodeResource {{resource: "{resource_name}"}})
+            RETURN nres.metric as metric_name, nres.unit as unit, nres.timeseries_origin as tms_table
+        """
+        return query

@@ -133,6 +133,18 @@ class AcesMetrics(TimeScaleDB):
         metrics = [metric_tuple[0] for metric_tuple in records]
         return metrics
 
+    def fetch_node_metrics(
+            self,
+            table_name,
+            metric
+    ):
+        self.cursor.execute(
+            f"""SELECT time, value FROM {table_name} WHERE metric='{metric}'"""
+        )
+        records = self.cursor.fetchall()
+        records_tms = [{tpl[0]: tpl[1]} for tpl in records]
+        return records_tms
+
     def metrics_value_range(
             self,
             table_name,
