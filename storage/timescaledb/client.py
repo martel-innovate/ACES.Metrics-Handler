@@ -231,3 +231,29 @@ class AcesMetrics(TimeScaleDB):
         else:
             results = {}
         return results
+
+    def pod_status_hist(
+            self,
+            pod_id
+    ):
+        query = f"""
+            SELECT time, pod, phase, status_flag
+            FROM pod_phase WHERE pod='{pod_id}'
+            ORDER BY time DESC
+        """
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        results_list = []
+        if records:
+            for i in range(0, len(records), 5):
+                results_list.append({
+                    "time": records[i][0],
+                    "status": {
+                        records[i][2]: records[i][3],
+                        records[i + 1][2]: records[i + 1][3],
+                        records[i + 2][2]: records[i + 2][3],
+                        records[i + 3][2]: records[i + 3][3],
+                        records[i + 4][2]: records[i + 4][3]
+                    }
+                })
+        return results_list

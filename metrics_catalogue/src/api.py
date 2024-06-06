@@ -122,6 +122,12 @@ async def get_pod_phase(pod_id: str):
     return results
 
 
+@app.get('/pod/{pod_id}/phase/history', tags=["Pod Metrics APIs"])
+async def get_pod_phase_hist(pod_id: str):
+    list_of_res = aces_metrics.pod_status_hist(pod_id)
+    return list_of_res
+
+
 @app.get('/nodes/pod/{pod_id}/metrics', tags=["Pod Metrics APIs"])
 async def get_pod_metrics(pod_id: str):
     node_id = 'node1'
