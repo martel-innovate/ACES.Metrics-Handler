@@ -67,6 +67,19 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(create_hyper_table)
         self.close_client()
 
+    def init_aces_pod_phase(self, table_name="pod_phase"):
+        table_creation_query = f"""
+            CREATE TABLE {table_name} ( 
+                time TIMESTAMPTZ NOT NULL,
+                pod TEXT,
+                phase TEXT,
+                status_flag INTEGER
+            )"""
+        create_hyper_table = f"""SELECT create_hypertable('{table_name}', by_range('time'))"""
+        self.cursor.execute(table_creation_query)
+        self.cursor.execute(create_hyper_table)
+        self.close_client()
+
     def insert_metrics(
             self,
             table_name,
@@ -92,6 +105,20 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(
             f"INSERT INTO {node_table_name} (time, metric, value) VALUES (%s, %s, %s);",
             (time, metric, value)
+        )
+        self.close_client()
+
+    def insert_pod_phase_details(
+            self,
+            table_name,
+            time,
+            pod,
+            phase,
+            status_flag
+    ):
+        self.cursor.execute(
+            f"INSERT INTO {table_name} (time, pod, phase, status_flag) VALUES (%s, %s, %s,  %s);",
+            (time, pod, phase, status_flag)
         )
         self.close_client()
 
@@ -179,3 +206,28 @@ class AcesMetrics(TimeScaleDB):
         """
         self.cursor.execute(query)
         self.conn.commit()
+
+    def get_pod_status(
+            self,
+            pod_id
+    ):
+        query = f"""
+            SELECT time, pod, phase, status_flag FROM pod_phase
+            WHERE pod='{pod_id}'
+            ORDER BY time DESC LIMIT 5
+        """
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        if records:
+            this_time = records[0][0]
+            phases = {}
+            for tpl in records:
+                phases[tpl[2]] = tpl[3]
+            results = {
+                "pod": pod_id,
+                "time": this_time,
+                "phases": phases
+            }
+        else:
+            results = {}
+        return results

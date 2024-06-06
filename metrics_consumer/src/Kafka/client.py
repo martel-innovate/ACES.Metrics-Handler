@@ -114,6 +114,14 @@ class KafkaObject(object):
                 metric=target_metric_name,
                 value=value
             )
+        elif metric_name == "kube_pod_status_phase":
+            aces_metrics.insert_pod_phase_details(
+                table_name="pod_phase",
+                time=json_result['timestamp'],
+                pod=json_result['labels']['pod'],
+                phase=json_result['labels']['phase'],
+                status_flag=json_result['value']
+            )
 
     def producer(
             self,
