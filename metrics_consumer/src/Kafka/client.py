@@ -122,6 +122,21 @@ class KafkaObject(object):
                 phase=json_result['labels']['phase'],
                 status_flag=json_result['value']
             )
+        elif metric_name == "kube_pod_container_status_restarts_total":
+            aces_metrics.insert_metrics(
+                    table_name="metrics_values",
+                    time=json_result['timestamp'],
+                    metric=metric_name,
+                    pod=result['pod'],
+                    value=json_result['value'],
+                    node="node1"
+                )
+        elif metric_name == "kube_pod_container_status_restarts_total":
+            aces_metrics.upsert_num_of_restarts(
+                pod_id=result['pod'],
+                num_of_restarts=json_result['value'],
+                time=json_result['timestamp']
+            )
 
     def producer(
             self,

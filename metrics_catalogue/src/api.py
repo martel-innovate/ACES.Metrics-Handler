@@ -167,6 +167,12 @@ async def get_spec_metrics(
     return tms
 
 
+@app.get('/pod/{pod_id}/restarts', tags=["Pod Metrics APIs"])
+def get_pod_restarts(pod_id: str):
+    results = aces_metrics.get_pod_restarts(pod_id)
+    return results
+
+
 @app.get('/init', tags=["Init Phase"])
 async def init_catalogue():
     supply_agent, demand_agent = init_graph_base()

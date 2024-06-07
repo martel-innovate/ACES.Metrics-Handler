@@ -1,6 +1,12 @@
+import sys
 import datetime
+import logging
 
 import psycopg2
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+log = logging.getLogger(__name__)
 
 
 class TimeScaleDB(object):
@@ -257,3 +263,52 @@ class AcesMetrics(TimeScaleDB):
                     }
                 })
         return results_list
+
+    def upsert_num_of_restarts(
+            self,
+            pod_id,
+            num_of_restarts,
+            time,
+            target_metric='kube_pod_container_status_restarts_total',
+            target_node='node1'
+    ):
+        self.cursor.execute(
+            f"""
+            SELECT time, pod, value FROM metrics_values
+            WHERE pod='{pod_id}' AND metric='{target_metric}'
+            """
+        )
+        entry_exists_for_pod = self.cursor.fetchone()
+        if entry_exists_for_pod:
+            log.info(f"record exists: {entry_exists_for_pod}")
+            num_of_restarts_old = entry_exists_for_pod[2]
+            if num_of_restarts_old == num_of_restarts:
+                log.info(f"same number of restarts for pod: {pod_id}, no need to update record")
+            else:
+                log.info(f"new number of restarts for pod: {pod_id}, update record")
+                self.cursor.execute(
+                    f"""
+                    UPDATE metrics_values 
+                    SET value={num_of_restarts}, time='{time}'
+                    WHERE pod='{pod_id}' AND metric='{target_metric}'
+                    """
+                )
+                self.conn.commit()
+        else:
+            log.info(f"fresh insert for pod: {pod_id}")
+            self.cursor.execute(
+                f"INSERT INTO metrics_values (time, metric, node, pod, value) VALUES (%s, %s, %s, %s, %s);",
+                (time, target_metric, target_node, pod_id, num_of_restarts)
+            )
+            self.conn.commit()
+
+    def get_pod_restarts(self, pod_id):
+        self.cursor.execute(
+            f"""
+            SELECT time, value FROM metrics_values
+            WHERE pod='{pod_id}' AND metric='kube_pod_container_status_restarts_total'
+            """
+        )
+        records = self.cursor.fetchone()
+        results = {"pod": pod_id, "time": records[0], "restarts": records[1]}
+        return results
