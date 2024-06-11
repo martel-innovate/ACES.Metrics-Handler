@@ -1,3 +1,6 @@
 server:
   remoteWrite:
   - url: "http://prometheus-kafka-adapter:8080/receive"
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false
