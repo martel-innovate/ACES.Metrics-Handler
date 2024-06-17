@@ -275,4 +275,16 @@ async def node_resources(resource_name: str):
         results["tms"] = resource_tms
     return results
 
+
+@app.get('/pod/{pod_id}/resource/requests', tags=["Pod Metrics APIs"])
+async def pod_resource_requests(pod_id: str):
+    result_tuples = aces_metrics.get_pod_resource_reqs(pod_id)
+    return result_tuples
+
+
+@app.get('/pod/{pod_id}/resource/limits', tags=["Pod Metrics APIs"])
+async def pod_resource_limits(pod_id: str):
+    result_tuples = aces_metrics.get_pod_resource_limits(pod_id)
+    return result_tuples
+
 # uvicorn api:app --reload --host 0.0.0.0

@@ -236,6 +236,12 @@ class AcesMetrics(TimeScaleDB):
         records_tms = [{tpl[0]: tpl[1]} for tpl in records]
         return records_tms
 
+    def fetch_resource_requests(
+            self,
+            table_name="container_resource_requests"
+    ):
+        self.cursor.execute
+
     def metrics_value_range(
             self,
             table_name,
@@ -369,4 +375,42 @@ class AcesMetrics(TimeScaleDB):
         )
         records = self.cursor.fetchone()
         results = {"pod": pod_id, "time": records[0], "restarts": records[1]}
+        return results
+
+    def get_pod_resource_reqs(self, pod_id):
+        num_of_resources = 2
+        self.cursor.execute(
+            f"""
+            SELECT time, resource, unit, value FROM container_resource_requests WHERE pod='{pod_id}'
+            ORDER BY time ASC
+            """
+        )
+        records = self.cursor.fetchall()
+        results = [
+            {
+                records[i][0]: {
+                    records[i][1]: {"unit": records[i][2], "value": records[i][3]},
+                    records[i + 1][1]: {"unit": records[i + 1][2], "value": records[i + 1][3]}
+                }
+            } for i in range(0, len(records), num_of_resources)
+        ]
+        return results
+
+    def get_pod_resource_limits(self, pod_id):
+        num_of_resources = 2
+        self.cursor.execute(
+            f"""
+            SELECT time, resource, unit, value  FROM container_resource_limits WHERE pod='{pod_id}'
+            ORDER BY time ASC
+            """
+        )
+        records = self.cursor.fetchall()
+        results = [
+            {
+                records[i][0]: {
+                    records[i][1]: {"unit": records[i][2], "value": records[i][3]},
+                    records[i + 1][1]: {"unit": records[i + 1][2], "value": records[i + 1][3]}
+                }
+            } for i in range(0, len(records), num_of_resources)
+        ]
         return results
