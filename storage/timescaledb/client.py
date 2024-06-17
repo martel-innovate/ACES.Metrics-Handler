@@ -86,6 +86,64 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(create_hyper_table)
         self.close_client()
 
+    def init_container_resource_limits(self, table_name='container_resource_limits'):
+        table_creation_query = f"""
+            CREATE TABLE {table_name} ( 
+                time TIMESTAMPTZ NOT NULL,
+                pod TEXT,
+                resource TEXT,
+                unit TEXT,
+                value DOUBLE PRECISION
+            )"""
+        create_hyper_table = f"""SELECT create_hypertable('{table_name}', by_range('time'))"""
+        self.cursor.execute(table_creation_query)
+        self.cursor.execute(create_hyper_table)
+        self.close_client()
+
+    def init_container_resource_requests(self, table_name='container_resource_requests'):
+        table_creation_query = f"""
+            CREATE TABLE {table_name} ( 
+                time TIMESTAMPTZ NOT NULL,
+                pod TEXT,
+                resource TEXT,
+                unit TEXT,
+                value DOUBLE PRECISION
+            )"""
+        create_hyper_table = f"""SELECT create_hypertable('{table_name}', by_range('time'))"""
+        self.cursor.execute(table_creation_query)
+        self.cursor.execute(create_hyper_table)
+        self.close_client()
+
+    def insert_resource_requests(
+            self,
+            time,
+            pod,
+            resource,
+            unit,
+            value,
+            table_name='container_resource_requests'
+    ):
+        self.cursor.execute(
+            f'INSERT INTO {table_name} (time, pod, resource, unit, value) VALUES (%s, %s, %s, %s, %s);',
+            (time, pod, resource, unit, value)
+        )
+        self.close_client()
+
+    def insert_resource_limits(
+            self,
+            time,
+            pod,
+            resource,
+            unit,
+            value,
+            table_name='container_resource_limits'
+    ):
+        self.cursor.execute(
+            f'INSERT INTO {table_name} (time, pod, resource, unit, value) VALUES (%s, %s, %s, %s, %s);',
+            (time, pod, resource, unit, value)
+        )
+        self.close_client()
+
     def insert_metrics(
             self,
             table_name,

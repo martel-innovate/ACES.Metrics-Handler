@@ -21,7 +21,7 @@ class KafkaObject(object):
             max_pol_interval_ms=1750000,
             heartbeat_interval_ms=30000,
             connections_max_handle_ms=54000000,
-            off_set_reset='earliest'
+            off_set_reset='latest'
     ):
         self.bootstrap_servers = bootstrap_servers
         self.producer_conf = {
@@ -35,6 +35,7 @@ class KafkaObject(object):
             'connections.max.idle.ms': connections_max_handle_ms,
             'max.poll.interval.ms': max_pol_interval_ms,
             'fetch.wait.max.ms': 1000,
+            'enable.auto.commit': 'true',
             'socket.keepalive.enable': 'true',
             'default.topic.config': {
                 'auto.offset.reset': off_set_reset
@@ -136,6 +137,22 @@ class KafkaObject(object):
                 pod_id=result['pod'],
                 num_of_restarts=json_result['value'],
                 time=json_result['timestamp']
+            )
+        elif metric_name == "kube_pod_container_resource_limits":
+            aces_metrics.insert_resource_limits(
+                time=json_result['timestamp'],
+                pod=result['pod'],
+                value=json_result['value'],
+                resource=result['resource'],
+                unit=result['unit']
+            )
+        elif metric_name == "kube_pod_container_resource_requests":
+            aces_metrics.insert_resource_requests(
+                time=json_result['timestamp'],
+                pod=result['pod'],
+                value=json_result['value'],
+                resource=result['resource'],
+                unit=result['unit']
             )
 
     def producer(

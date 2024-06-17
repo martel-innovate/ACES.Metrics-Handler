@@ -5,7 +5,7 @@ metadata:
     app: metrics-consumer
   name: metrics-consumer
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: metrics-consumer
@@ -23,7 +23,7 @@ spec:
             - name: KAFKA_PORT
               value: "29092"
             - name: GROUP_ID
-              value: aces_metrics_consumer
+              value: aces_metrics_consumer8
             - name: TSCALE_HOST
               value: timescaledb
             - name: TSCALE_NAME
@@ -38,7 +38,7 @@ spec:
               value: neo4j
             - name: NEO4J_PASS
               value: neo4j290292
-          image: pkapsalismartel/metrics_consumer:v0.875
+          image: pkapsalismartel/metrics_consumer:v0.882
           name: metrics-consumer
           resources: {}
       hostname: metrics-consumer
