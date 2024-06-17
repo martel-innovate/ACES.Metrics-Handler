@@ -73,6 +73,33 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(create_hyper_table)
         self.close_client()
 
+    def init_pod_utilization(
+            self,
+            table_name="pod_utilization"
+    ):
+        table_creation_query = f"""
+            CREATE TABLE {table_name} ( 
+                time TIMESTAMPTZ NOT NULL,
+                pod TEXT,
+                type TEXT,
+                value DOUBLE PRECISION
+            )"""
+        create_hyper_table = f"""SELECT create_hypertable('{table_name}', by_range('time'))"""
+        self.cursor.execute(table_creation_query)
+        self.cursor.execute(create_hyper_table)
+        self.close_client()
+
+    def insert_utilization(
+            self, time,
+            pod, value,
+            type, table_name="pod_utilization"
+    ):
+        self.cursor.execute(
+            f'INSERT INTO {table_name} (time, pod, type, value) VALUES (%s, %s, %s, %s);',
+            (time, pod, type, value)
+        )
+        self.close_client()
+
     def init_aces_pod_phase(self, table_name="pod_phase"):
         table_creation_query = f"""
             CREATE TABLE {table_name} ( 

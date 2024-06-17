@@ -154,6 +154,20 @@ class KafkaObject(object):
                 resource=result['resource'],
                 unit=result['unit']
             )
+        elif metric_name == "aces_pod_cpu_utilization" and 'pod' in result.keys():
+            aces_metrics.insert_utilization(
+                time=json_result['timestamp'],
+                pod=result['pod'],
+                value=json_result['value'],
+                type='cpu'
+            )
+        elif metric_name == "aces_pod_memory_utilization" and 'pod' in result.keys():
+            aces_metrics.insert_utilization(
+                time=json_result['timestamp'],
+                pod=result['pod'],
+                value=json_result['value'],
+                type='memory'
+            )
 
     def producer(
             self,
