@@ -116,6 +116,13 @@ class KafkaObject(object):
                 value=value
             )
         elif metric_name == "kube_pod_status_phase":
+            query = mem_obj.insert_pod_metric(
+                node_id='node1',
+                pod_id=json_result['labels']['pod'],
+                name="kube_pod_status_phase",
+                timeseries_origin="pod_phase"
+            )
+            mem_obj.bolt_transaction(query)
             aces_metrics.insert_pod_phase_details(
                 table_name="pod_phase",
                 time=json_result['timestamp'],
@@ -124,21 +131,29 @@ class KafkaObject(object):
                 status_flag=json_result['value']
             )
         elif metric_name == "kube_pod_container_status_restarts_total":
-            aces_metrics.insert_metrics(
-                    table_name="metrics_values",
-                    time=json_result['timestamp'],
-                    metric=metric_name,
-                    pod=result['pod'],
-                    value=json_result['value'],
-                    node="node1"
-                )
-        elif metric_name == "kube_pod_container_status_restarts_total":
-            aces_metrics.upsert_num_of_restarts(
+            query = mem_obj.insert_pod_metric(
+                node_id='node1',
                 pod_id=result['pod'],
-                num_of_restarts=json_result['value'],
-                time=json_result['timestamp']
+                name="kube_pod_container_status_restarts_total",
+                timeseries_origin="metrics_values"
+            )
+            mem_obj.bolt_transaction(query)
+            aces_metrics.insert_metrics(
+                table_name="metrics_values",
+                time=json_result['timestamp'],
+                metric=metric_name,
+                pod=result['pod'],
+                value=json_result['value'],
+                node="node1"
             )
         elif metric_name == "kube_pod_container_resource_limits":
+            query = mem_obj.insert_pod_metric(
+                node_id='node1',
+                pod_id=result['pod'],
+                name="kube_pod_container_resource_limits",
+                timeseries_origin="container_resource_limits"
+            )
+            mem_obj.bolt_transaction(query)
             aces_metrics.insert_resource_limits(
                 time=json_result['timestamp'],
                 pod=result['pod'],
@@ -147,6 +162,13 @@ class KafkaObject(object):
                 unit=result['unit']
             )
         elif metric_name == "kube_pod_container_resource_requests":
+            query = mem_obj.insert_pod_metric(
+                node_id='node1',
+                pod_id=result['pod'],
+                name="kube_pod_container_resource_requests",
+                timeseries_origin="container_resource_requests"
+            )
+            mem_obj.bolt_transaction(query)
             aces_metrics.insert_resource_requests(
                 time=json_result['timestamp'],
                 pod=result['pod'],
@@ -155,6 +177,13 @@ class KafkaObject(object):
                 unit=result['unit']
             )
         elif metric_name == "aces_pod_cpu_utilization" and 'pod' in result.keys():
+            query = mem_obj.insert_pod_metric(
+                node_id='node1',
+                pod_id=result['pod'],
+                name="aces_pod_cpu_utilization",
+                timeseries_origin="pod_utilization"
+            )
+            mem_obj.bolt_transaction(query)
             aces_metrics.insert_utilization(
                 time=json_result['timestamp'],
                 pod=result['pod'],
@@ -162,6 +191,13 @@ class KafkaObject(object):
                 type='cpu'
             )
         elif metric_name == "aces_pod_memory_utilization" and 'pod' in result.keys():
+            query = mem_obj.insert_pod_metric(
+                node_id='node1',
+                pod_id=result['pod'],
+                name="aces_pod_memory_utilization",
+                timeseries_origin="pod_utilization"
+            )
+            mem_obj.bolt_transaction(query)
             aces_metrics.insert_utilization(
                 time=json_result['timestamp'],
                 pod=result['pod'],
