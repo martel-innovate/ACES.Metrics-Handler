@@ -47,6 +47,14 @@ class DemandGraph(GraphBase):
         """
         return query
 
+    def insert_kubelet_metric(self, node_id, metric_name, timeseries_origin):
+        query = f"""
+            MATCH (n:K8SNode {{node_id: '{node_id}'}})
+            MERGE (m:Metric {{name: '{metric_name}', timeseries_origin: '{timeseries_origin}'}})
+            MERGE (n)-[:HAS_KUBELET_METRIC]->(m)
+        """
+        return query
+
     def get_node_pods(
             self,
             node_id
@@ -199,5 +207,12 @@ class DemandGraph(GraphBase):
             MATCH (n:K8SNode {{node_id: "node1"}})-[:HAS_CAPACITY]->(nsc:NodeStatusCapacity)
             MATCH (nsc)-[:HAS_RESOURCE]->(nres:NodeResource {{resource: "{resource_name}"}})
             RETURN nres.metric as metric_name, nres.unit as unit, nres.timeseries_origin as tms_table
+        """
+        return query
+
+    def fetch_kubelet_metrics(self):
+        query = """
+            MATCH (n:K8SNode {node_id: "node1"})-[:HAS_KUBELET_METRIC]->(m:Metric)
+            return m.name as metric
         """
         return query

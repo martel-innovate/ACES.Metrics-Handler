@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 tags_metadata = [
     {"name": "Init Phase", "description": "Initialize Metrics Management"},
     {"name": "Pod Metrics APIs", "description": "APIs to manage Pod Metrics"},
+    {"name": "Pod Status APIs", "description": "APIs to manage Pod Status"},
+    {"name": "Container Metrics APIs", "description": "APIs to manage Container Metrics"},
     {"name": "Historical", "description": "APIs to manage historic information"},
     {"name": "Node Metrics APIs", "description": "APIs to manage Node Metrics"},
 ]
@@ -106,40 +108,32 @@ async def get_node_pods():
     return list_of_res
 
 
-@app.get('/pod/metrics', tags=["Pod Metrics APIs"])
+@app.get('/container/metrics', tags=["Container Metrics APIs"])
 async def get_metrics():
     supply_agent, demand_agent = init_graph_base()
     query = demand_agent.get_list_of_metrics()
     results = demand_agent.emit_transaction(query)
-    list_of_metrics = [metric["m"]._properties["name"] for metric in results]
+    list_of_metrics = [
+        metric["m"]._properties["name"]
+        for metric in results if metric["m"]._properties["name"].startswith("container_")
+    ]
     demand_agent.session.close()
     return list_of_metrics
 
 
-@app.get('/pod/{pod_id}/phase', tags=["Pod Metrics APIs"])
+@app.get('/pod/{pod_id}/phase', tags=["Pod Status APIs"])
 async def get_pod_phase(pod_id: str):
     results = aces_metrics.get_pod_status(pod_id)
     return results
 
 
-@app.get('/pod/{pod_id}/phase/history', tags=["Pod Metrics APIs"])
+@app.get('/pod/{pod_id}/phase/history', tags=["Pod Status APIs"])
 async def get_pod_phase_hist(pod_id: str):
     list_of_res = aces_metrics.pod_status_hist(pod_id)
     return list_of_res
 
 
-@app.get('/nodes/pod/{pod_id}/metrics', tags=["Pod Metrics APIs"])
-async def get_pod_metrics(pod_id: str):
-    node_id = 'node1'
-    supply_agent, demand_agent = init_graph_base()
-    query = demand_agent.get_pod_metrics(node_id, pod_id)
-    results = demand_agent.emit_transaction(query)[0]['pod_metrics']
-    pod_metrics = [metric._properties["name"] for metric in results]
-    demand_agent.session.close()
-    return pod_metrics
-
-
-@app.get('/nodes/pod/{pod_id}/metrics/{metric_id}', tags=["Pod Metrics APIs"])
+@app.get('/nodes/pod/{pod_id}/container/metrics/{metric_id}', tags=["Container Metrics APIs"])
 async def get_spec_metrics(
         pod_id: str,
         metric_id: str
@@ -167,7 +161,7 @@ async def get_spec_metrics(
     return tms
 
 
-@app.get('/pod/{pod_id}/restarts', tags=["Pod Metrics APIs"])
+@app.get('/pod/{pod_id}/restarts', tags=["Pod Status APIs"])
 def get_pod_restarts(pod_id: str):
     results = aces_metrics.get_pod_restarts(pod_id)
     return results
@@ -197,7 +191,14 @@ async def init_catalogue():
     )
     supply_agent.exec(query_node)
     supply_agent.session.close()
-    return {"msg": "Init was finalized"}
+    aces_metrics.init_aces_hyper_table("metrics_values")
+    aces_metrics.init_aces_node_hyper_table("node_metrics")
+    aces_metrics.init_aces_pod_phase("pod_phase")
+    aces_metrics.init_container_resource_limits()
+    aces_metrics.init_container_resource_requests()
+    aces_metrics.init_pod_utilization()
+    aces_metrics.init_kubelet_metrics_table()
+    return {"msg": "Initialization completed"}
 
 
 @app.get('/nodes/pods/{pod_id}/history/', tags=["Historical"])
@@ -276,10 +277,32 @@ async def node_resources(resource_name: str):
     return results
 
 
+@app.get('/kubelet/metrics', tags=["Node Metrics APIs"])
+def get_kubelet_metrics():
+    supply_agent, demand_agent = init_graph_base()
+    query = demand_agent.fetch_kubelet_metrics()
+    results = demand_agent.emit_transaction(query)
+    demand_agent.session.close()
+    kubelet_metrics = [record['metric'] for record in results]
+    return kubelet_metrics
+
+
+@app.get('/kubelet/metrics/{metric}/tms', tags=["Node Metrics APIs"])
+def get_kubelet_metric_tms(metric: str):
+    tms_records = aces_metrics.get_kubelet_metric_tms(metric)
+    return tms_records
+
+
 @app.get('/pod/{pod_id}/resource/requests', tags=["Pod Metrics APIs"])
 async def pod_resource_requests(pod_id: str):
     result_tuples = aces_metrics.get_pod_resource_reqs(pod_id)
     return result_tuples
+
+
+@app.get('/pod/{pod_id}/utilization', tags=["Pod Metrics APIs"])
+async def pod_util(pod_id: str):
+    results = aces_metrics.get_pod_utilization_details(pod_id)
+    return results
 
 
 @app.get('/pod/{pod_id}/resource/limits', tags=["Pod Metrics APIs"])

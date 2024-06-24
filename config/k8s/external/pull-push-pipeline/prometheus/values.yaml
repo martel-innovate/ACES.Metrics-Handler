@@ -4,6 +4,8 @@ server:
 prometheus-node-exporter:
   hostRootFsMount:
     enabled: false
+kubeScheduler:
+  enabled: true
 serverFiles:
   rules:
     groups:

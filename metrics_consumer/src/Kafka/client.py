@@ -204,6 +204,56 @@ class KafkaObject(object):
                 value=json_result['value'],
                 type='memory'
             )
+        elif metric_name == "kubelet_active_pods" or metric_name == "kubelet_restarted_pods_total":
+            if "static" in json_result["labels"].keys():
+                if json_result["labels"]["static"] == "true":
+                    query = mem_obj.insert_kubelet_metric(
+                        node_id="node1",
+                        metric_name=metric_name,
+                        timeseries_origin="kubelet_metrics"
+                    )
+                    mem_obj.bolt_transaction(query)
+                    aces_metrics.insert_kubelet(
+                        time=json_result["timestamp"],
+                        value=json_result["value"],
+                        metric=metric_name
+                    )
+        elif metric_name in [
+            "kubelet_managed_ephemeral_containers",
+            "kubelet_running_containers",
+            "kubelet_running_pods",
+            "kubelet_started_containers_total",
+            "kubelet_started_pods_errors_total",
+            "kubelet_started_pods_total"
+        ]:
+            query = mem_obj.insert_kubelet_metric(
+                node_id="node1",
+                metric_name=metric_name,
+                timeseries_origin="kubelet_metrics"
+            )
+            mem_obj.bolt_transaction(query)
+            aces_metrics.insert_kubelet(
+                time=json_result["timestamp"],
+                value=json_result["value"],
+                metric=metric_name
+            )
+        elif metric_name == "kubelet_working_pods":
+            if "static" in json_result["labels"].keys():
+                if json_result["labels"]["static"] == "true":
+                    formatted_metric_name = f'{metric_name}_{json_result["labels"]["config"]}_{json_result["labels"]["lifecycle"]}'
+                    query = mem_obj.insert_kubelet_metric(
+                        node_id="node1",
+                        metric_name=formatted_metric_name,
+                        timeseries_origin="kubelet_metrics"
+                    )
+                    mem_obj.bolt_transaction(query)
+                    aces_metrics.insert_kubelet(
+                        time=json_result["timestamp"],
+                        value=json_result["value"],
+                        metric=formatted_metric_name
+                    )
+        else:
+            pass
 
     def producer(
             self,

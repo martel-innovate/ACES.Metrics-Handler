@@ -89,6 +89,34 @@ class AcesMetrics(TimeScaleDB):
         self.cursor.execute(create_hyper_table)
         self.close_client()
 
+    def init_kubelet_metrics_table(
+            self,
+            table_name="kubelet_metrics"
+    ):
+        table_creation_query = f"""
+            CREATE TABLE {table_name} ( 
+                time TIMESTAMPTZ NOT NULL,
+                metric TEXT,
+                value DOUBLE PRECISION
+            )"""
+        create_hyper_table = f"""SELECT create_hypertable('{table_name}', by_range('time'))"""
+        self.cursor.execute(table_creation_query)
+        self.cursor.execute(create_hyper_table)
+        self.close_client()
+
+    def insert_kubelet(
+            self,
+            time,
+            metric,
+            value,
+            table_name="kubelet_metrics"
+    ):
+        self.cursor.execute(
+            f'INSERT INTO {table_name} (time, metric,value) VALUES (%s, %s, %s);',
+            (time, metric, value)
+        )
+        self.close_client()
+
     def insert_utilization(
             self, time,
             pod, value,
@@ -441,3 +469,27 @@ class AcesMetrics(TimeScaleDB):
             } for i in range(0, len(records), num_of_resources)
         ]
         return results
+
+    def get_kubelet_metric_tms(self, metric):
+        self.cursor.execute(
+            f"SELECT time, value FROM kubelet_metrics WHERE metric='{metric}'"
+        )
+        tms_records = {
+            rec[0]: rec[1]
+            for rec in self.cursor.fetchall()
+        }
+        return tms_records
+
+    def get_pod_utilization_details(self, pod_id):
+        self.cursor.execute(
+            f"SELECT time, type, value FROM pod_utilization WHERE pod='{pod_id}'"
+        )
+        results = self.cursor.fetchall()
+        util_records = {
+            results[i][0]: {
+                results[i][1]: results[i][2],
+                results[i + 1][1]: results[i + 1][2]
+            }
+            for i in range(0, len(results), 2)
+        }
+        return util_records

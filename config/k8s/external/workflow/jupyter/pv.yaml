@@ -11,4 +11,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/Users/panagiotiskapsalis/PycharmProjects/MARTEL-PROJECTS/AcesDataManager/retentionETLs"
+    path: "/Users/panagiotiskapsalis/PycharmProjects/MARTEL-PROJECTS/AcesDataManager/pvs/notebook"
