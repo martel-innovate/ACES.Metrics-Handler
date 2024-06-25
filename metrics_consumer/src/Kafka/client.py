@@ -281,19 +281,23 @@ class KafkaObject(object):
         consumer_config['group.id'] = group_id
         consumer = confluent_kafka.Consumer(**consumer_config)
         consumer.subscribe(list_of_topics)
+        try:
+            while True:
+                msg = consumer.poll()
+                if msg is None:
+                    continue
 
-        while True:
-            msg = consumer.poll()
-            if msg is None:
-                continue
-
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # End of partition event
-                    sys.stderr.write(
-                        '%% %s [%d] reached end at offset %d\n' % (msg.topic(), msg.partition(), msg.offset()))
-                elif msg.error():
-                    # Error
-                    raise KafkaException(msg.error())
-            else:
-                self.handler(msg, mem_obj, aces_metrics)
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        # End of partition event
+                        sys.stderr.write(
+                            '%% %s [%d] reached end at offset %d\n' % (msg.topic(), msg.partition(), msg.offset()))
+                    elif msg.error():
+                        # Error
+                        raise KafkaException(msg.error())
+                else:
+                    self.handler(msg, mem_obj, aces_metrics)
+        except Exception as ex:
+            self.logger.error(ex)
+        finally:
+            consumer.close()
