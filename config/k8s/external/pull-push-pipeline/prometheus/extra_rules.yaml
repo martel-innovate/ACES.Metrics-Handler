@@ -1,0 +1,6 @@
+rules:
+  groups:
+    - name: custom_rules
+      rules:
+      - record: pod_cpu_utilization
+        expr: sum by (pod) (rate(container_cpu_usage_seconds_total[1m]))

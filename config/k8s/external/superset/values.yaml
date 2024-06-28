@@ -1,0 +1,28 @@
+# Define the namespace where Superset will be installed
+namespace: superset
+
+# Database configuration
+postgresql:
+  enabled: false
+supersetNode:
+  connections:
+    db_host: pg-db.superset.svc.cluster.local
+    db_port: "5432"
+    db_user: superset
+    db_pass: superset
+    db_name: superset
+#  postgresqlUsername: supersetpostgres
+#  postgresqlPassword: SuperPGadmin@2024
+#  postgresqlDatabase: superset
+
+configOverrides:
+  secret: |
+    SECRET_KEY = 'asdfghjkl1992asasassas'
+    SQLLAB_TIMEOUT=120
+
+
+bootstrapScript: |
+  #!/bin/bash
+  pip install psycopg2-binary \
+    pip install pyhive &&\
+  if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi

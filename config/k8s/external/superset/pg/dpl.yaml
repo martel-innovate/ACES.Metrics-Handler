@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pg-db
+  name: pg-db
+spec:
+  ports:
+  # PostgreSQL wire protocol clients.
+  - port: 5432
+    targetPort: 5432
+    name: pg-db
+  selector:
+    app: pg-db
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-db
+  labels:
+    app: pg-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-db
+  template:
+    metadata:
+      labels:
+        app: pg-db
+    spec:
+      containers:
+      - name: pg-db
+        image: postgres:15.3
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+          name: pg-db
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "superset"
+        - name: POSTGRES_USER
+          value: "superset"
+        - name: POSTGRES_DB
+          value: "superset"
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: pg-db-pv
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: pg-db-pv
+        persistentVolumeClaim:
+          claimName: pg-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pg-db-pvc
+spec:
+  storageClassName: hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pg-db-pv
+  labels:
+    type: local
+spec:
+  storageClassName: hostpath
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/Users/panagiotiskapsalis/PycharmProjects/MARTEL-PROJECTS/AcesDataManager/config/k8s/external/superset/pg/pv"

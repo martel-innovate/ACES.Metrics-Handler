@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timescale-cm
+data: 
+  postgresql.conf: |+
+    data_directory = '/data/pgdata'
+    ident_file = '/config/pg_ident.conf'
+    port = 5432
+    listen_addresses = '*'
+    max_connections = 100
+    shared_buffers = 128MB
+    dynamic_shared_memory_type = posix
+    max_wal_size = 1GB
+    min_wal_size = 80MB
+    log_timezone = 'Etc/UTC'
+    datestyle = 'iso, mdy'
+    timezone = 'Etc/UTC'
+
+    #locale settings
+    lc_messages = 'en_US.utf8'			# locale for system error message
+    lc_monetary = 'en_US.utf8'			# locale for monetary formatting
+    lc_numeric = 'en_US.utf8'			# locale for number formatting
+    lc_time = 'en_US.utf8'				# locale for time formatting
+
+    default_text_search_config = 'pg_catalog.english'
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: timescale-sts
+spec:
+  selector:
+    matchLabels:
+      app: timescale
+  serviceName: "timescale"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: timescale
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: timescale
+        image: timescale/timescaledb:latest-pg14
+        args: ["-c", "config_file=/config/postgresql.conf"]
+        ports:
+        - containerPort: 5432
+          name: database
+        env:
+        - name: PGDATA
+          value: "/data/pgdata"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: timescale
+              key: POSTGRES_USER
+              optional: false
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: timescale
+              key: POSTGRES_PASSWORD
+              optional: false
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: timescale
+              key: POSTGRES_DB
+              optional: false
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: false
+        - name: data
+          mountPath: /data
+          readOnly: false
+      volumes:
+      - name: config
+        configMap:
+          name: timescale-cm
+          defaultMode: 0755
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      #storageClassName: "directpv-min-io"
+      storageClassName: "hostpath"
+      resources:
+        requests:
+          storage: 300Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timescale-svc-hl
+spec:
+  selector:
+    app: timescale
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None

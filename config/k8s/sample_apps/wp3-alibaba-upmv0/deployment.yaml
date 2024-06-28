@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aces-w3-alibaba-ml-upm-svc
+spec:
+  selector:
+    app: aces-w3-alibaba-ml-upm
+  ports:
+  - port: 8081
+    targetPort: 8081
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aces-w3-alibaba-ml-upm
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aces-w3-alibaba-ml-upm
+  template:
+    metadata:
+      labels:
+        app: aces-w3-alibaba-ml-upm
+    spec:
+      containers:
+      - name: aces-w3-alibaba-ml-upm-cont
+        image: ayahyaou/aces_wp3_alibaba_ml_upm:v2
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8081
