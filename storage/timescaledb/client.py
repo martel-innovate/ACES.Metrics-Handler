@@ -1,4 +1,5 @@
 import sys
+import math
 import datetime
 import logging
 
@@ -21,6 +22,12 @@ class TimeScaleDB(object):
     ):
         this_uri = f"postgres://{username}:{password}@{host}:{port}/{database}"
         return this_uri
+
+    @staticmethod
+    def is_valid_number(value):
+        return value is not None and not (
+                (isinstance(value, float) or isinstance(value, int)) and math.isnan(value)
+        )
 
     def __init__(
             self,
@@ -111,22 +118,30 @@ class AcesMetrics(TimeScaleDB):
             value,
             table_name="kubelet_metrics"
     ):
-        self.cursor.execute(
-            f'INSERT INTO {table_name} (time, metric,value) VALUES (%s, %s, %s);',
-            (time, metric, value)
-        )
-        self.close_client()
+        is_valid_value = self.is_valid_number(value)
+        if is_valid_value:
+            self.cursor.execute(
+                f'INSERT INTO {table_name} (time, metric,value) VALUES (%s, %s, %s);',
+                (time, metric, value)
+            )
+            self.close_client()
+        else:
+            pass
 
     def insert_utilization(
             self, time,
             pod, value,
             type, table_name="pod_utilization"
     ):
-        self.cursor.execute(
-            f'INSERT INTO {table_name} (time, pod, type, value) VALUES (%s, %s, %s, %s);',
-            (time, pod, type, value)
-        )
-        self.close_client()
+        yes_or_not = self.is_valid_number(value=value)
+        if yes_or_not:
+            self.cursor.execute(
+                f'INSERT INTO {table_name} (time, pod, type, value) VALUES (%s, %s, %s, %s);',
+                (time, pod, type, value)
+            )
+            self.close_client()
+        else:
+            pass
 
     def init_aces_pod_phase(self, table_name="pod_phase"):
         table_creation_query = f"""
@@ -178,11 +193,15 @@ class AcesMetrics(TimeScaleDB):
             value,
             table_name='container_resource_requests'
     ):
-        self.cursor.execute(
-            f'INSERT INTO {table_name} (time, pod, resource, unit, value) VALUES (%s, %s, %s, %s, %s);',
-            (time, pod, resource, unit, value)
-        )
-        self.close_client()
+        is_valid_num = self.is_valid_number(value)
+        if is_valid_num:
+            self.cursor.execute(
+                f'INSERT INTO {table_name} (time, pod, resource, unit, value) VALUES (%s, %s, %s, %s, %s);',
+                (time, pod, resource, unit, value)
+            )
+            self.close_client()
+        else:
+            pass
 
     def insert_resource_limits(
             self,
@@ -208,11 +227,15 @@ class AcesMetrics(TimeScaleDB):
             pod,
             value
     ):
-        self.cursor.execute(
-            f"INSERT INTO {table_name} (time, metric, node, pod, value) VALUES (%s, %s, %s, %s, %s);",
-            (time, metric, node, pod, value)
-        )
-        self.close_client()
+        is_valid_number = self.is_valid_number(value)
+        if is_valid_number:
+            self.cursor.execute(
+                f"INSERT INTO {table_name} (time, metric, node, pod, value) VALUES (%s, %s, %s, %s, %s);",
+                (time, metric, node, pod, value)
+            )
+            self.close_client()
+        else:
+            pass
 
     def insert_node_metrics(
             self,
@@ -221,11 +244,15 @@ class AcesMetrics(TimeScaleDB):
             metric,
             value
     ):
-        self.cursor.execute(
-            f"INSERT INTO {node_table_name} (time, metric, value) VALUES (%s, %s, %s);",
-            (time, metric, value)
-        )
-        self.close_client()
+        is_valid_num = self.is_valid_number(value)
+        if is_valid_num:
+            self.cursor.execute(
+                f"INSERT INTO {node_table_name} (time, metric, value) VALUES (%s, %s, %s);",
+                (time, metric, value)
+            )
+            self.close_client()
+        else:
+            pass
 
     def insert_pod_phase_details(
             self,
