@@ -25,9 +25,7 @@ class TimeScaleDB(object):
 
     @staticmethod
     def is_valid_number(value):
-        return value is not None and not (
-                (isinstance(value, float) or isinstance(value, int)) and math.isnan(value)
-        )
+        return value !="NaN"
 
     def __init__(
             self,
@@ -212,11 +210,15 @@ class AcesMetrics(TimeScaleDB):
             value,
             table_name='container_resource_limits'
     ):
-        self.cursor.execute(
-            f'INSERT INTO {table_name} (time, pod, resource, unit, value) VALUES (%s, %s, %s, %s, %s);',
-            (time, pod, resource, unit, value)
-        )
-        self.close_client()
+        is_valid_num = self.is_valid_number(value)
+        if is_valid_num:
+            self.cursor.execute(
+                f'INSERT INTO {table_name} (time, pod, resource, unit, value) VALUES (%s, %s, %s, %s, %s);',
+                (time, pod, resource, unit, value)
+            )
+            self.close_client()
+        else:
+            pass
 
     def insert_metrics(
             self,
