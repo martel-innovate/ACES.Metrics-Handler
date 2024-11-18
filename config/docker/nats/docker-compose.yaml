@@ -1,0 +1,15 @@
+services:
+
+  nats-server:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # Monitoring endpoint
+    command: "-js"  # Enable JetStream
+
+
+  nats-cli:
+    image: natsio/nats-box:latest
+    depends_on:
+      - nats-server
+    entrypoint: [ "/bin/sh", "-c", "while :; do sleep 10; done" ]
