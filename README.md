@@ -1,4 +1,4 @@
-# Aces Metrics Hanlder
+# Aces Metrics Handler
 Will operate in the EMDC level to extract metrics and efficiently organize them.
 Licensed under MIT license
 
