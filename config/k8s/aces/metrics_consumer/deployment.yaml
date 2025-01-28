@@ -38,7 +38,7 @@ spec:
               value: neo4j
             - name: NEO4J_PASS
               value: neo4j290292
-          image: pkapsalismartel/metrics_consumer:v0.13
+          image: pkapsalismartel/metrics_consumer:v0.14
           name: metrics-consumer
           resources: {}
       hostname: metrics-consumer
