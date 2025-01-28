@@ -51,8 +51,9 @@ class KafkaObject(object):
         metric_name = result["__name__"]
         if metric_name.startswith("container"):
             if "pod" in result.keys():
+                print(result, flush=True)
                 query = mem_obj.insert_pod_metric(
-                    node_id="node1",
+                    node_id=result["instance"],
                     pod_id=result["pod"],
                     name=metric_name,
                     timeseries_origin="metrics_values"
@@ -64,13 +65,13 @@ class KafkaObject(object):
                     metric=metric_name,
                     pod=result['pod'],
                     value=json_result['value'],
-                    node="node1"
+                    node=result["instance"]
                 )
         elif metric_name in easy_node_metrics:
             self.logger.info(metric_name)
             self.logger.info(json_result)
             query = mem_obj.make_easy_node_metrics(
-                node_id="node1",
+                node_id=result["node"],
                 node_metric=metric_name,
                 instance=json_result["labels"]["instance"],
                 node_details=json_result["labels"]["node"]
@@ -97,7 +98,7 @@ class KafkaObject(object):
             mem_obj.bolt_transaction(query)
         elif metric_name == "kube_node_role":
             query = mem_obj.set_kube_node_role(
-                node_id="node1",
+                node_id=result["node"],
                 node_metric=metric_name,
                 instance=json_result["labels"]["instance"],
                 node_details=json_result["labels"]["node"],
@@ -117,7 +118,7 @@ class KafkaObject(object):
             )
         elif metric_name == "kube_pod_status_phase":
             query = mem_obj.insert_pod_metric(
-                node_id='node1',
+                node_id=result["node"],
                 pod_id=json_result['labels']['pod'],
                 name="kube_pod_status_phase",
                 timeseries_origin="pod_phase"
@@ -132,7 +133,7 @@ class KafkaObject(object):
             )
         elif metric_name == "kube_pod_container_status_restarts_total":
             query = mem_obj.insert_pod_metric(
-                node_id='node1',
+                node_id=result["node"],
                 pod_id=result['pod'],
                 name="kube_pod_container_status_restarts_total",
                 timeseries_origin="metrics_values"
@@ -144,11 +145,11 @@ class KafkaObject(object):
                 metric=metric_name,
                 pod=result['pod'],
                 value=json_result['value'],
-                node="node1"
+                node=result["node"]
             )
         elif metric_name == "kube_pod_container_resource_limits":
             query = mem_obj.insert_pod_metric(
-                node_id='node1',
+                node_id=result["node"],
                 pod_id=result['pod'],
                 name="kube_pod_container_resource_limits",
                 timeseries_origin="container_resource_limits"
@@ -163,7 +164,7 @@ class KafkaObject(object):
             )
         elif metric_name == "kube_pod_container_resource_requests":
             query = mem_obj.insert_pod_metric(
-                node_id='node1',
+                node_id=result["node"],
                 pod_id=result['pod'],
                 name="kube_pod_container_resource_requests",
                 timeseries_origin="container_resource_requests"
@@ -208,7 +209,7 @@ class KafkaObject(object):
             if "static" in json_result["labels"].keys():
                 if json_result["labels"]["static"] == "true":
                     query = mem_obj.insert_kubelet_metric(
-                        node_id="node1",
+                        node_id=result["instance"],
                         metric_name=metric_name,
                         timeseries_origin="kubelet_metrics"
                     )
@@ -227,7 +228,7 @@ class KafkaObject(object):
             "kubelet_started_pods_total"
         ]:
             query = mem_obj.insert_kubelet_metric(
-                node_id="node1",
+                node_id=result["instance"],
                 metric_name=metric_name,
                 timeseries_origin="kubelet_metrics"
             )
@@ -242,7 +243,7 @@ class KafkaObject(object):
                 if json_result["labels"]["static"] == "true":
                     formatted_metric_name = f'{metric_name}_{json_result["labels"]["config"]}_{json_result["labels"]["lifecycle"]}'
                     query = mem_obj.insert_kubelet_metric(
-                        node_id="node1",
+                        node_id=result["instance"],
                         metric_name=formatted_metric_name,
                         timeseries_origin="kubelet_metrics"
                     )

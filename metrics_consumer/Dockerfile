@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 RUN pip install poetry
 ENV POETRY_NO_INTERACTION=1 \
@@ -16,6 +16,6 @@ COPY storage/timescaledb ./timescaledb
 COPY metrics_consumer/src/consume.py .
 COPY metrics_consumer/src/settings.py .
 
-RUN poetry install
+#RUN poetry install
 
 ENTRYPOINT ["poetry", "run", "python", "-m", "consume"]
