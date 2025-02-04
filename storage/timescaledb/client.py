@@ -71,7 +71,8 @@ class AcesMetrics(TimeScaleDB):
             CREATE TABLE {node_table_name} ( 
                 time TIMESTAMPTZ NOT NULL,
                 metric TEXT,
-                value DOUBLE PRECISION
+                value DOUBLE PRECISION,
+                node TEXT
             )"""
         create_hyper_table = f"""SELECT create_hypertable('{node_table_name}', by_range('time'))"""
         self.cursor.execute(table_creation_query)
@@ -147,7 +148,8 @@ class AcesMetrics(TimeScaleDB):
                 time TIMESTAMPTZ NOT NULL,
                 pod TEXT,
                 phase TEXT,
-                status_flag INTEGER
+                status_flag INTEGER,
+                node TEXT
             )"""
         create_hyper_table = f"""SELECT create_hypertable('{table_name}', by_range('time'))"""
         self.cursor.execute(table_creation_query)
@@ -244,13 +246,14 @@ class AcesMetrics(TimeScaleDB):
             node_table_name,
             time,
             metric,
-            value
+            value,
+            node
     ):
         is_valid_num = self.is_valid_number(value)
         if is_valid_num:
             self.cursor.execute(
-                f"INSERT INTO {node_table_name} (time, metric, value) VALUES (%s, %s, %s);",
-                (time, metric, value)
+                f"INSERT INTO {node_table_name} (time, metric, value, node) VALUES (%s, %s, %s, %s);",
+                (time, metric, value, node)
             )
             self.close_client()
         else:
@@ -262,11 +265,12 @@ class AcesMetrics(TimeScaleDB):
             time,
             pod,
             phase,
-            status_flag
+            status_flag,
+            node
     ):
         self.cursor.execute(
-            f"INSERT INTO {table_name} (time, pod, phase, status_flag) VALUES (%s, %s, %s,  %s);",
-            (time, pod, phase, status_flag)
+            f"INSERT INTO {table_name} (time, pod, phase, status_flag, node) VALUES (%s, %s, %s,  %s, %s);",
+            (time, pod, phase, status_flag, node)
         )
         self.close_client()
 
@@ -366,7 +370,7 @@ class AcesMetrics(TimeScaleDB):
             pod_id
     ):
         query = f"""
-            SELECT time, pod, phase, status_flag FROM pod_phase
+            SELECT time, pod, phase, status_flag, node FROM pod_phase
             WHERE pod='{pod_id}'
             ORDER BY time DESC LIMIT 5
         """
@@ -380,7 +384,8 @@ class AcesMetrics(TimeScaleDB):
             results = {
                 "pod": pod_id,
                 "time": this_time,
-                "phases": phases
+                "phases": phases,
+                "node": records[0][4]
             }
         else:
             results = {}

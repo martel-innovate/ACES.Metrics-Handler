@@ -80,7 +80,8 @@ class KafkaObject(object):
                 node_table_name="node_metrics",
                 time=json_result["timestamp"],
                 metric=metric_name,
-                value=json_result["value"]
+                value=json_result["value"],
+                node=result["node"]
             )
         elif metric_name == "kube_node_info":
             query = mem_obj.set_kube_node_info(
@@ -113,7 +114,8 @@ class KafkaObject(object):
                 node_table_name="node_metrics",
                 time=time_stmp,
                 metric=target_metric_name,
-                value=value
+                value=value,
+                node=result["node"]
             )
         elif metric_name == "kube_pod_status_phase":
             query = mem_obj.insert_pod_metric(
@@ -128,7 +130,8 @@ class KafkaObject(object):
                 time=json_result['timestamp'],
                 pod=json_result['labels']['pod'],
                 phase=json_result['labels']['phase'],
-                status_flag=json_result['value']
+                status_flag=json_result['value'],
+                node=result["node"]
             )
         elif metric_name == "kube_pod_container_status_restarts_total":
             query = mem_obj.insert_pod_metric(
