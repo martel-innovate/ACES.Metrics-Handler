@@ -39,7 +39,13 @@ spec:
             - name: NEO4J_PASS
               value: neo4j290292
           image: pkapsalismartel/metrics_consumer:v0.15
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
           name: metrics-consumer
-          resources: {}
       hostname: metrics-consumer
       restartPolicy: Always
