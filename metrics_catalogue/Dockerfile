@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.13.1-slim
 
 RUN pip install poetry
 ENV POETRY_NO_INTERACTION=1 \
@@ -15,5 +15,4 @@ COPY storage/timescaledb ./timescaledb
 COPY storage/object ./object
 COPY metrics_catalogue/src .
 
-RUN poetry install
 ENTRYPOINT ["poetry", "run", "uvicorn", "api:app", "--port", "8002", "--reload", "--host", "0.0.0.0"]
